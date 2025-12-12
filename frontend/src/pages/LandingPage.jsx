@@ -2,6 +2,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
+
 export default function LandingPage() {
   const navigate = useNavigate();
 
@@ -16,10 +17,10 @@ export default function LandingPage() {
       </div>
 
       {/* Top Navbar */}
-      <nav className="w-full px-8 py-4 flex justify-between items-center bg-[var(--surface)] shadow-md relative z-10">
+        <nav className="w-full px-8 py-4 flex justify-between items-center bg-[var(--surface)] shadow-md fixed top-0 left-0 z-20">
         <div className="text-2xl font-bold text-[var(--k8sBlue)]">DevOps Assistant</div>
         <ul className="flex gap-6 text-[var(--text)] font-medium">
-          <li className="hover:text-[var(--k8sBlue)] cursor-pointer" onClick={() => window.scrollTo(0,0)}>Home</li>
+          <li className="hover:text-[var(--k8sBlue)] cursor-pointer" onClick={() => document.getElementById("hero").scrollIntoView({ behavior: "smooth" })}>Home</li>
           <li className="hover:text-[var(--k8sBlue)] cursor-pointer">Docs</li>
           <li className="hover:text-[var(--k8sBlue)] cursor-pointer">Contact</li>
           <li className="hover:text-[var(--k8sBlue)] cursor-pointer">About</li>
@@ -27,7 +28,8 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 text-center z-10 relative">
+      <div  id="hero" className="flex-1 flex flex-col items-center justify-center px-6 text-center z-10 relative max-w-5xl mx-auto">
+
         
         {/* Big Heading */}
         <h1 className="text-4xl md:text-6xl font-extrabold mb-4 animate-fadeIn">
@@ -43,13 +45,15 @@ export default function LandingPage() {
         <div className="flex flex-col sm:flex-row gap-4 animate-fadeIn delay-400">
           <button
             onClick={() => navigate("/dashboard")}
-            className="px-8 py-4 bg-[var(--k8sBlue)] hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg transition transform hover:-translate-y-1"
+            className="px-8 py-4 bg-[var(--k8sBlue)] hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg transition transform hover:-translate-y-1 hover:scale-105"
+
           >
             Go to Dashboard
           </button>
           <button
             onClick={() => navigate("/assistant")}
-            className="px-8 py-4 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-xl shadow-lg transition transform hover:-translate-y-1"
+            className="px-8 py-4 bg-[var(--k8sBlue)] hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg transition transform hover:-translate-y-1 hover:scale-105"
+
           >
             Launch AI Assistant
           </button>

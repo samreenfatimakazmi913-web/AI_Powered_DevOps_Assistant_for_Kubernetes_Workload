@@ -15,7 +15,7 @@ const Icon = ({ path }) => (
 
 export default function Sidebar() {
   const items = [
-  { to: "/", label: "Executive Dashboard", icon: "M3 12h18M3 6h18M3 18h18" },
+  { to: "/Dashboard", label: "Executive Dashboard", icon: "M3 12h18M3 6h18M3 18h18" },
   { to: "/structured", label: "Structured Querying", icon: "M12 2v20M2 12h20" },
   { to: "/assistant", label: "AI Assistant", icon: "M12 2v20M2 12h20" }
 ];
