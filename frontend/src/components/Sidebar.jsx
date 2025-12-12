@@ -15,14 +15,11 @@ const Icon = ({ path }) => (
 
 export default function Sidebar() {
   const items = [
-    { to: "/", label: "Dashboard", icon: "M3 12h18M3 6h18M3 18h18" },
-    { to: "/workloads", label: "Workloads", icon: "M3 7h18v10H3z" },
-    { to: "/pods", label: "Pods", icon: "M12 2v20M2 12h20" },
-    { to: "/deployments", label: "Deployments", icon: "M12 2l9 4.5V21L12 17.5 3 21V6.5L12 2z" },
-    { to: "/nodes", label: "Nodes", icon: "M12 2v6M12 16v6M4 8h16" },
-    { to: "/assistant", label: "AI Assistant", icon: "M12 2v20M2 12h20" }
+  { to: "/", label: "Executive Dashboard", icon: "M3 12h18M3 6h18M3 18h18" },
+  { to: "/structured", label: "Structured Querying", icon: "M12 2v20M2 12h20" },
+  { to: "/assistant", label: "AI Assistant", icon: "M12 2v20M2 12h20" }
+];
 
-  ];
 
   return (
     <aside
