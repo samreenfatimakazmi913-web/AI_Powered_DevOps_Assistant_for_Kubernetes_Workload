@@ -1,25 +1,15 @@
+// ===============================
+// src/components/Sidebar.jsx
+// ===============================
 import React from "react";
 import { NavLink } from "react-router-dom";
 
-/* Small inline SVG icons */
-const Icon = ({ path }) => (
-  <svg
-    className="w-5 h-5 flex-shrink-0"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-  >
-    <path d={path} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-
 export default function Sidebar() {
   const items = [
-  { to: "/Dashboard", label: "Executive Dashboard", icon: "M3 12h18M3 6h18M3 18h18" },
-  { to: "/structured", label: "Structured Querying", icon: "M12 2v20M2 12h20" },
-  { to: "/assistant", label: "AI Assistant", icon: "M12 2v20M2 12h20" }
-];
-
+    { to: "/Dashboard", label: "Executive Dashboard" },
+    { to: "/structured", label: "Structured Querying" },
+    { to: "/assistant", label: "AI Assistant" },
+  ];
 
   return (
     <aside
@@ -31,37 +21,32 @@ export default function Sidebar() {
       "
     >
       <div className="mb-8">
-        <div className="text-2xl font-bold text-gray-900 dark:text-white transition-colors duration-300">
+        <div className="text-2xl font-bold text-gray-900 dark:text-white">
           K8s Assistant
         </div>
-        <div className="text-sm text-gray-600 dark:text-gray-400 mt-1 transition-colors duration-300">
+        <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
           Cluster overview
         </div>
       </div>
 
-      <nav className="flex flex-col gap-2">
+      <nav className="flex flex-col gap-1">
         {items.map((it) => (
           <NavLink
+            key={it.to}
             to={it.to}
             end
-            key={it.to}
             className={({ isActive }) =>
-              `
-              flex items-center gap-3 px-3 py-2 rounded-md 
-              transition-colors duration-300
-              hover:bg-gray-100 dark:hover:bg-gray-800
-              ${isActive
-                ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-400"
-                : "text-gray-900 dark:text-gray-200"
-              }
-              `
+              `px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200\n              ${isActive
+                ? "bg-blue-600 text-white"
+                : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"}`
             }
           >
-            <Icon path={it.icon} />
-            <span className="text-sm font-medium">{it.label}</span>
+            {it.label}
           </NavLink>
         ))}
       </nav>
     </aside>
   );
 }
+
+
