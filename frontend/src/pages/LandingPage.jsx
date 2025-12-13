@@ -2,12 +2,18 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
-
 export default function LandingPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="relative min-h-screen bg-[var(--bg)] text-[var(--text)] flex flex-col overflow-hidden">
+    <div className="relative min-h-screen flex flex-col overflow-hidden">
+
+      {/* Background Image */}
+      <img
+        src="/gradient-bg.png"
+        alt="Background Gradient"
+        className="absolute inset-0 w-full h-full object-cover z-10"
+      />
 
       {/* Animated Background Shapes */}
       <div className="absolute inset-0 -z-10">
@@ -17,10 +23,15 @@ export default function LandingPage() {
       </div>
 
       {/* Top Navbar */}
-        <nav className="w-full px-8 py-4 flex justify-between items-center bg-[var(--surface)] shadow-md fixed top-0 left-0 z-20">
+      <nav className="w-full px-8 py-4 flex justify-between items-center bg-[var(--surface)] shadow-md fixed top-0 left-0 z-20">
         <div className="text-2xl font-bold text-[var(--k8sBlue)]">DevOps Assistant</div>
         <ul className="flex gap-6 text-[var(--text)] font-medium">
-          <li className="hover:text-[var(--k8sBlue)] cursor-pointer" onClick={() => document.getElementById("hero").scrollIntoView({ behavior: "smooth" })}>Home</li>
+          <li
+            className="hover:text-[var(--k8sBlue)] cursor-pointer"
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          >
+            Home
+          </li>
           <li className="hover:text-[var(--k8sBlue)] cursor-pointer">Docs</li>
           <li className="hover:text-[var(--k8sBlue)] cursor-pointer">Contact</li>
           <li className="hover:text-[var(--k8sBlue)] cursor-pointer">About</li>
@@ -28,35 +39,42 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <div  id="hero" className="flex-1 flex flex-col items-center justify-center px-6 text-center z-10 relative max-w-5xl mx-auto">
+      <div className="relative z-10 flex-1 flex items-center justify-center px-6 max-w-7xl mx-auto">
+        <div className="w-full flex flex-col lg:flex-row items-center lg:items-start gap-10">
 
-        
-        {/* Big Heading */}
-        <h1 className="text-4xl md:text-6xl font-extrabold mb-4 animate-fadeIn">
-          AI-Powered <span className="text-[var(--k8sBlue)]">DevOps Assistant</span> for Kubernetes Workloads
-        </h1>
+          {/* Left Column: Text */}
+          <div className="flex-1 flex flex-col items-start text-left">
+            <h1 className="text-4xl md:text-6xl font-extrabold mb-4 animate-fadeIn text-white">
+              AI-Powered <span className="text-[var(--k8sBlue)]">DevOps Assistant</span><br />
+              for Kubernetes Workloads
+            </h1>
+            <p className="text-lg md:text-xl text-[var(--muted)] mb-8 max-w-lg animate-fadeIn delay-200">
+              Streamline your Kubernetes operations, monitor metrics, manage jobs, and interact with an intelligent AI assistant — all in one platform.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 animate-fadeIn delay-400">
+              <button
+                onClick={() => navigate("/dashboard")}
+                className="px-8 py-4 bg-[var(--k8sBlue)] hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg transition transform hover:-translate-y-1 hover:scale-105"
+              >
+                Go to Dashboard
+              </button>
+              <button
+                onClick={() => navigate("/assistant")}
+                className="px-8 py-4 bg-[var(--k8sBlue)] hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg transition transform hover:-translate-y-1 hover:scale-105"
+              >
+                Launch AI Assistant
+              </button>
+            </div>
+          </div>
 
-        {/* Subheading */}
-        <p className="text-lg md:text-xl text-[var(--muted)] mb-10 max-w-2xl animate-fadeIn delay-200">
-          Streamline your Kubernetes operations, monitor metrics, manage jobs, and interact with an intelligent AI assistant — all in one platform.
-        </p>
+          {/* Right Column: Illustration / Animation */}
+          <div className="flex-1 flex justify-center lg:justify-end items-center">
+            <div className="w-80 h-80 bg-[rgba(255,255,255,0.05)] rounded-3xl animate-floatSlow flex items-center justify-center">
+              {/* Replace with Lottie or PNG Illustration */}
+              <img src="/hero-illustration.png" alt="Illustration" className="w-full h-full object-contain" />
+            </div>
+          </div>
 
-        {/* Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 animate-fadeIn delay-400">
-          <button
-            onClick={() => navigate("/dashboard")}
-            className="px-8 py-4 bg-[var(--k8sBlue)] hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg transition transform hover:-translate-y-1 hover:scale-105"
-
-          >
-            Go to Dashboard
-          </button>
-          <button
-            onClick={() => navigate("/assistant")}
-            className="px-8 py-4 bg-[var(--k8sBlue)] hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg transition transform hover:-translate-y-1 hover:scale-105"
-
-          >
-            Launch AI Assistant
-          </button>
         </div>
       </div>
 
