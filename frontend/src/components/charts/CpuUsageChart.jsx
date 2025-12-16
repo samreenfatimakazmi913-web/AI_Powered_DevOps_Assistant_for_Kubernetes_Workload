@@ -1,51 +1,94 @@
 import React from "react";
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
 
 export default function CpuUsageChart() {
-  // Dummy data for CPU usage per deployment
-  const cpuData = [
-    { name: "deployment-auth", value: 35 },
-    { name: "deployment-api", value: 25 },
-    { name: "deployment-frontend", value: 20 },
-    { name: "deployment-worker", value: 15 },
-    { name: "deployment-logging", value: 5 }
+  /* ---- Trend Data ---- */
+  const lineData = [
+    { time: "10:00", value: 32 },
+    { time: "10:10", value: 45 },
+    { time: "10:20", value: 61 },
+    { time: "10:30", value: 58 },
   ];
 
-  const COLORS = ["#2563eb", "#059669", "#d97706", "#dc2626", "#8b5cf6"];
+  /* ---- Distribution Data ---- */
+  const pieData = [
+    { name: "API", value: 35 },
+    { name: "Auth", value: 25 },
+    { name: "Worker", value: 20 },
+    { name: "System", value: 20 },
+  ];
+
+  const COLORS = ["#22C55E", "#16A34A", "#4ADE80", "#86EFAC"];
 
   return (
-    <div className="bg-white dark:bg-[#111827] p-4 rounded-xl shadow-md">
-      <h2 className="text-lg font-semibold mb-3">CPU Usage of Deployments</h2>
+    <div className="
+      bg-white dark:bg-[#111827]
+      rounded-2xl p-6
+      shadow-md hover:shadow-xl
+      transition-all duration-300
+    ">
+      <h2 className="text-lg font-semibold mb-4">CPU Usage</h2>
 
-      <div className="w-full h-[300px]"> {/* Reduced height from 400px to 300px */}
-        <ResponsiveContainer>
-          <PieChart>
-            <Pie
-              data={cpuData}
-              cx="45%"  // slightly left to make room for right legend
-              cy="50%"
-              labelLine={false}
-              outerRadius={100} // reduced radius from 140 to 100
-              fill="#8884d8"
-              dataKey="value"
-              label={({ value }) => `${value}%`} // show only %
-            >
-              {cpuData.map((entry, index) => (
-                <Cell key={index} fill={COLORS[index % COLORS.length]} />
-              ))}
-            </Pie>
-            <Tooltip />
-            <Legend
-              layout="vertical"
-              verticalAlign="middle"
-              align="right"
-              iconType="circle"
-              formatter={(value, entry, index) => (
-                <span style={{ color: COLORS[index] }}>{value}</span>
-              )}
-            />
-          </PieChart>
-        </ResponsiveContainer>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        {/* -------- PIE -------- */}
+        <div className="h-[220px]">
+          <ResponsiveContainer>
+            <PieChart>
+              <Pie
+                data={pieData}
+                innerRadius={55}
+                outerRadius={80}
+                dataKey="value"
+                paddingAngle={4}
+              >
+                {pieData.map((_, i) => (
+                  <Cell key={i} fill={COLORS[i]} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+
+          <p className="text-xs text-center text-gray-500 mt-2">
+            CPU Distribution
+          </p>
+        </div>
+
+        {/* -------- LINE -------- */}
+        <div className="h-[220px]">
+          <ResponsiveContainer>
+            <LineChart data={lineData}>
+              <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2} />
+              <XAxis dataKey="time" tick={{ fontSize: 12 }} />
+              <YAxis unit="%" tick={{ fontSize: 12 }} />
+              <Tooltip />
+
+              <Line
+                type="monotone"
+                dataKey="value"
+                stroke="#22C55E"
+                strokeWidth={3}
+                dot={false}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+
+          <p className="text-xs text-center text-gray-500 mt-2">
+            CPU Trend
+          </p>
+        </div>
       </div>
     </div>
   );
