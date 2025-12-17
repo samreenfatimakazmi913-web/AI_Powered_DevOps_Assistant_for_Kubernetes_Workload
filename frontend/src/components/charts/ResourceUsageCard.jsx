@@ -1,4 +1,9 @@
+// ===============================
+// src/components/charts/ResourceUsageCard.jsx
+// ===============================
+
 import React from "react";
+import { Card } from "../ui/card";
 import {
   PieChart,
   Pie,
@@ -11,17 +16,7 @@ import {
   Tooltip,
 } from "recharts";
 
-const COLORS = ["#22C55E", "#E5E7EB"]; // green + gray
-
-function getHealthStatus(usedPercent) {
-  if (usedPercent < 60) {
-    return { label: "Healthy", color: "bg-green-100 text-green-700 border-green-300" };
-  }
-  if (usedPercent < 80) {
-    return { label: "Warning", color: "bg-yellow-100 text-yellow-700 border-yellow-300" };
-  }
-  return { label: "Critical", color: "bg-red-100 text-red-700 border-red-300" };
-}
+const COLORS = ["#22C55E", "#E5E7EB"]; // Used / Free
 
 export default function ResourceUsageCard({
   title,
@@ -30,56 +25,62 @@ export default function ResourceUsageCard({
   lineColor,
   unit,
 }) {
-  const used = pieData.find(p => p.name === "Used")?.value || 0;
-  const health = getHealthStatus(used);
-
   return (
-    <div className="rounded-2xl border p-5 bg-white dark:bg-[#0f172a] shadow-sm hover:shadow-md transition">
+    <Card className="p-4 sm:p-5 shadow-sm dark:text-gray-200">
+      {/* TITLE */}
+      <h2 className="text-base sm:text-lg font-semibold mb-4 dark:text-white">
+        {title}
+      </h2>
 
-      {/* Header */}
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-semibold">{title}</h2>
-
-        <span
-          className={`text-xs px-3 py-1 rounded-full border font-medium ${health.color}`}
-        >
-          {health.label}
-        </span>
-      </div>
-
-      {/* Charts */}
-      <div className="grid grid-cols-2 gap-4">
-
-        {/* Pie */}
-        <div className="h-[180px]">
-          <ResponsiveContainer>
+      {/* CONTENT */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        {/* -------- PIE CHART -------- */}
+        <div className="w-full sm:w-1/3 h-40 sm:h-48">
+          <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={pieData}
-                innerRadius={50}
-                outerRadius={70}
                 dataKey="value"
-                paddingAngle={3}
+                nameKey="name"
+                innerRadius={30}
+                outerRadius={60}   // 🔥 mobile-friendly size
+                paddingAngle={4}
               >
-                {pieData.map((_, i) => (
-                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                {pieData.map((_, index) => (
+                  <Cell key={index} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip />
             </PieChart>
           </ResponsiveContainer>
 
-          <p className="text-center text-sm mt-1 text-gray-500">
-            Used: <b>{used}%</b>
-          </p>
+          {/* LEGEND */}
+          <div className="flex justify-center gap-4 mt-2 text-xs text-gray-500 dark:text-gray-400">
+            {pieData.map((d, i) => (
+              <div key={d.name} className="flex items-center gap-1">
+                <span
+                  className="w-2.5 h-2.5 rounded-full"
+                  style={{ backgroundColor: COLORS[i] }}
+                />
+                {d.name}
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* Line */}
-        <div className="h-[180px]">
-          <ResponsiveContainer>
+        {/* -------- LINE CHART -------- */}
+        <div className="w-full sm:w-2/3 h-44 sm:h-56">
+          <ResponsiveContainer width="100%" height="100%">
             <LineChart data={lineData}>
-              <XAxis dataKey="time" hide />
-              <YAxis hide />
+              <XAxis
+                dataKey="time"
+                tick={{ fontSize: 10 }}
+                stroke="#9CA3AF"
+              />
+              <YAxis
+                tick={{ fontSize: 10 }}
+                stroke="#9CA3AF"
+                tickFormatter={(v) => `${v}${unit}`}
+              />
               <Tooltip />
               <Line
                 type="monotone"
@@ -91,8 +92,7 @@ export default function ResourceUsageCard({
             </LineChart>
           </ResponsiveContainer>
         </div>
-
       </div>
-    </div>
+    </Card>
   );
 }

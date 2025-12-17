@@ -1,3 +1,7 @@
+// ===============================
+// src/pages/StructuredQuerying.jsx
+// ===============================
+
 import React, { useState, useEffect } from "react";
 import { Card } from "../components/ui/card";
 import { Select } from "../components/ui/select";
@@ -25,7 +29,7 @@ $ dig service`,
   },
 ];
 
-/* ---------------- MOCK METRICS (later Prometheus) ---------------- */
+/* ---------------- MOCK METRICS ---------------- */
 
 const cpuData = [
   { time: "10:00", value: 0.32 },
@@ -48,8 +52,6 @@ const requestData = [
   { time: "10:30", value: 300 },
 ];
 
-/* ---------------- COMPONENT ---------------- */
-
 export default function StructuredQuerying() {
   const [tab, setTab] = useState("troubleshoot");
 
@@ -62,45 +64,41 @@ export default function StructuredQuerying() {
 
   const [terminal, setTerminal] = useState("");
   const [logs, setLogs] = useState("Logs will appear here...\n");
-  const [loading, setLoading] = useState(false);
 
-  /* ---------------- FETCH ALL PODS → EXTRACT NAMESPACES ---------------- */
+  /* ---------------- FETCH NAMESPACES ---------------- */
 
   useEffect(() => {
     fetch("http://localhost:5000/api/pods")
-      .then((res) => res.json())
-      .then((data) => {
-        const uniqueNs = [...new Set(data.map(p => p.metadata.namespace))];
-        setNamespaces(uniqueNs);
-      })
-      .catch((err) => console.error("Namespace error:", err));
+      .then(res => res.json())
+      .then(data => {
+  if (!Array.isArray(data)) {
+    console.error("Pods API did not return array:", data);
+    setNamespaces([]);
+    return;
+  }
+
+  const uniqueNs = [...new Set(
+    data
+      .filter(p => p?.metadata?.namespace)
+      .map(p => p.metadata.namespace)
+  )];
+
+  setNamespaces(uniqueNs);
+});
   }, []);
 
-  /* ---------------- FETCH PODS BY NAMESPACE ---------------- */
+  /* ---------------- FETCH PODS ---------------- */
 
   useEffect(() => {
     if (!namespace) return;
 
-    setPod("");
-    setTool("");
-    setTerminal("");
-    setLogs("Logs will appear here...\n");
-
-    setLoading(true);
-
     fetch("http://localhost:5000/api/pods")
-      .then((res) => res.json())
-      .then((data) => {
-        const filteredPods = data
+      .then(res => res.json())
+      .then(data => {
+        const filtered = data
           .filter(p => p.metadata.namespace === namespace)
           .map(p => p.metadata.name);
-
-        setPods(filteredPods);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Pod error:", err);
-        setLoading(false);
+        setPods(filtered);
       });
   }, [namespace]);
 
@@ -119,45 +117,37 @@ ${selected.cmd}`
   /* ---------------- FETCH LOGS ---------------- */
 
   const fetchLogs = async () => {
-    if (!namespace || !pod) {
-      setLogs("❌ Namespace or Pod not selected");
-      return;
-    }
+    if (!namespace || !pod) return;
 
     setLogs("Fetching logs...\n");
-
-    try {
-      const res = await fetch(
-        `http://localhost:5000/api/logs/${encodeURIComponent(namespace)}/${encodeURIComponent(pod)}`
-      );
-
-      const text = await res.text();
-      setLogs(text || "No logs available");
-    } catch (err) {
-      console.error(err);
-      setLogs("❌ Failed to fetch logs");
-    }
+    const res = await fetch(
+      `http://localhost:5000/api/logs/${namespace}/${pod}`
+    );
+    const text = await res.text();
+    setLogs(text || "No logs available");
   };
 
   return (
-    <div className="p-6 space-y-8">
-      <h1 className="text-3xl font-bold">Structured Querying</h1>
+    <div className="p-4 sm:p-6 space-y-8">
+      <h1 className="text-2xl sm:text-3xl font-bold">
+        Structured Querying
+      </h1>
 
       {/* ---------------- TABS ---------------- */}
-      <div className="flex gap-12 border-b pb-3">
+      <div className="flex flex-wrap gap-6 border-b pb-3">
         {[
-          ["troubleshoot", "1️⃣ Troubleshooting"],
-          ["logs", "2️⃣ Logs"],
-          ["metrics", "3️⃣ Metrics"],
+          ["troubleshoot", "Troubleshooting"],
+          ["logs", "Logs"],
+          ["metrics", "Metrics"],
         ].map(([key, label]) => (
           <button
             key={key}
             onClick={() => setTab(key)}
-            className={
+            className={`pb-2 text-sm sm:text-base ${
               tab === key
-                ? "border-b-2 border-blue-600 font-semibold pb-2"
-                : "text-gray-500 pb-2"
-            }
+                ? "border-b-2 border-blue-600 font-semibold"
+                : "text-gray-500"
+            }`}
           >
             {label}
           </button>
@@ -166,33 +156,30 @@ ${selected.cmd}`
 
       {/* ---------------- TROUBLESHOOT ---------------- */}
       {tab === "troubleshoot" && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <Card>
             <h2 className="font-semibold mb-2">Namespace</h2>
-            <Select value={namespace} onChange={(e) => setNamespace(e.target.value)}>
+            <Select value={namespace} onChange={e => setNamespace(e.target.value)}>
               <option value="">Select Namespace</option>
               {namespaces.map(ns => (
-                <option key={ns} value={ns}>{ns}</option>
+                <option key={ns}>{ns}</option>
               ))}
             </Select>
           </Card>
 
-          {namespace && (
-            <Card>
-              <h2 className="font-semibold mb-2">Tool</h2>
-              <Select value={tool} onChange={(e) => setTool(e.target.value)}>
-                <option value="">Select Tool</option>
-                {troubleshootTools.map(t => (
-                  <option key={t.name} value={t.name}>{t.name}</option>
-                ))}
-              </Select>
-            </Card>
-          )}
+          <Card>
+            <h2 className="font-semibold mb-2">Tool</h2>
+            <Select value={tool} onChange={e => setTool(e.target.value)}>
+              <option value="">Select Tool</option>
+              {troubleshootTools.map(t => (
+                <option key={t.name}>{t.name}</option>
+              ))}
+            </Select>
+          </Card>
 
           {tool && (
             <Card className="lg:col-span-3">
-              <h2 className="font-semibold mb-2">Terminal</h2>
-              <pre className="bg-black text-green-400 p-4 rounded h-52 font-mono text-sm">
+              <pre className="bg-black text-green-400 p-4 rounded h-48 text-xs sm:text-sm overflow-auto">
                 {terminal}
               </pre>
             </Card>
@@ -202,42 +189,37 @@ ${selected.cmd}`
 
       {/* ---------------- LOGS ---------------- */}
       {tab === "logs" && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card>
-            <h2 className="font-semibold mb-2">Namespace</h2>
-            <Select value={namespace} onChange={(e) => setNamespace(e.target.value)}>
-              <option value="">Select Namespace</option>
-              {namespaces.map(ns => (
-                <option key={ns} value={ns}>{ns}</option>
-              ))}
-            </Select>
-          </Card>
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Card>
+              <Select value={namespace} onChange={e => setNamespace(e.target.value)}>
+                <option value="">Namespace</option>
+                {namespaces.map(ns => (
+                  <option key={ns}>{ns}</option>
+                ))}
+              </Select>
+            </Card>
 
-          <Card>
-            <h2 className="font-semibold mb-2">Pod</h2>
-            <Select
-              disabled={!namespace}
-              value={pod}
-              onChange={(e) => setPod(e.target.value)}
+            <Card>
+              <Select value={pod} onChange={e => setPod(e.target.value)}>
+                <option value="">Pod</option>
+                {pods.map(p => (
+                  <option key={p}>{p}</option>
+                ))}
+              </Select>
+            </Card>
+
+            <Button
+              onClick={fetchLogs}
+              disabled={!pod}
+              className="w-full sm:w-auto flex items-center justify-center gap-2"
             >
-              <option value="">Select Pod</option>
-              {pods.map(p => (
-                <option key={p} value={p}>{p}</option>
-              ))}
-            </Select>
-          </Card>
+              <Play size={16} /> Fetch Logs
+            </Button>
+          </div>
 
-          <Button
-            disabled={!pod}
-            onClick={fetchLogs}
-            className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600
-                       hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg"
-          >
-            <Play size={16} /> Fetch Logs
-          </Button>
-
-          <Card className="lg:col-span-3">
-            <pre className="bg-[#0D1117] text-gray-200 p-4 h-80 overflow-auto rounded font-mono text-sm">
+          <Card>
+            <pre className="bg-[#0D1117] text-gray-200 p-4 h-[60vh] sm:h-80 text-xs sm:text-sm overflow-auto rounded">
               {logs}
             </pre>
           </Card>
@@ -246,24 +228,14 @@ ${selected.cmd}`
 
       {/* ---------------- METRICS ---------------- */}
       {tab === "metrics" && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card>
-            <h2 className="font-semibold mb-2">Namespace</h2>
-            <Select value={namespace} onChange={(e) => setNamespace(e.target.value)}>
-              <option value="">Select Namespace</option>
-              {namespaces.map(ns => (
-                <option key={ns} value={ns}>{ns}</option>
-              ))}
-            </Select>
-          </Card>
-
+        <div className="space-y-6">
           {[["CPU Usage", cpuData, "#22C55E"],
             ["Memory Usage", memoryData, "#3B82F6"],
             ["Requests", requestData, "#F59E0B"]]
             .map(([title, data, color]) => (
-              <Card key={title} className="lg:col-span-3">
+              <Card key={title}>
                 <h2 className="font-semibold mb-2">{title}</h2>
-                <ResponsiveContainer width="100%" height={250}>
+                <ResponsiveContainer width="100%" height={220}>
                   <LineChart data={data}>
                     <XAxis dataKey="time" />
                     <YAxis />
