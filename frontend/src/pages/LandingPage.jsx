@@ -32,6 +32,14 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <section className="relative overflow-hidden">
+
+  {/* Ribbon Background */}
+  <img
+    src="/Ribbon-blue.png"
+    alt="Decorative ribbon"
+    className="absolute -top-40 right-0 w-[900px] opacity-80 pointer-events-none select-none"
+  />
+
         <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800" />
         <div className="relative max-w-7xl mx-auto px-6 py-24 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div className="space-y-6">
