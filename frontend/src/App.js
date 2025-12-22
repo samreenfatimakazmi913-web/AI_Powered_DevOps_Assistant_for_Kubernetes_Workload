@@ -10,6 +10,7 @@ import JobDetail from "./pages/JobDetail";
 import NotFound from "./pages/NotFound";
 import LandingPage from "./pages/LandingPage";
 import AuthPage from "./pages/AuthPage";
+import AboutPage from "./pages/AboutPage";
 
 import Sidebar from "./components/Sidebar";
 import Topbar from "./components/Topbar";
@@ -20,16 +21,14 @@ function Layout({ children }) {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // PUBLIC pages (no sidebar/topbar)
   const hideNav =
-    location.pathname === "/" || location.pathname === "/auth";
+    location.pathname === "/" ||
+    location.pathname === "/auth" ||
+    location.pathname === "/about";
 
   return (
-    <div className="
-  min-h-screen flex
-  bg-gray-100 text-gray-900
-  dark:bg-[#0b111b] dark:text-gray-200
-">
-
+    <div className="min-h-screen flex bg-gray-100 dark:bg-[#0b111b] text-gray-900 dark:text-gray-200">
       {!hideNav && (
         <>
           {/* Desktop Sidebar */}
@@ -37,7 +36,7 @@ function Layout({ children }) {
             <Sidebar />
           </div>
 
-          {/* Mobile Overlay */}
+          {/* Mobile overlay */}
           {sidebarOpen && (
             <div
               className="fixed inset-0 bg-black/40 z-40 md:hidden"
@@ -47,7 +46,8 @@ function Layout({ children }) {
 
           {/* Mobile Sidebar */}
           <div
-            className={`fixed z-50 inset-y-0 left-0 w-64 transform bg-white dark:bg-gray-900
+            className={`fixed z-50 inset-y-0 left-0 w-64 transform
+              bg-white dark:bg-gray-900
               transition-transform md:hidden
               ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
           >
@@ -57,9 +57,7 @@ function Layout({ children }) {
       )}
 
       <div className="flex-1 flex flex-col min-h-screen">
-        {!hideNav && (
-          <Topbar onMenuClick={() => setSidebarOpen(true)} />
-        )}
+        {!hideNav && <Topbar onMenuClick={() => setSidebarOpen(true)} />}
 
         <main
           className={`flex-1 ${
@@ -79,28 +77,51 @@ export default function App() {
       <BrowserRouter>
         <Layout>
           <Routes>
+            {/* -------- PUBLIC -------- */}
             <Route path="/" element={<LandingPage />} />
+            <Route path="/about" element={<AboutPage />} />
             <Route path="/auth" element={<AuthPage />} />
 
+            {/* -------- PROTECTED -------- */}
             <Route
               path="/dashboard"
-              element={<ProtectedRoute><Dashboard /></ProtectedRoute>}
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
             />
             <Route
               path="/structured"
-              element={<ProtectedRoute><StructuredQuerying /></ProtectedRoute>}
+              element={
+                <ProtectedRoute>
+                  <StructuredQuerying />
+                </ProtectedRoute>
+              }
             />
             <Route
               path="/nodes"
-              element={<ProtectedRoute><Nodes /></ProtectedRoute>}
+              element={
+                <ProtectedRoute>
+                  <Nodes />
+                </ProtectedRoute>
+              }
             />
             <Route
               path="/assistant"
-              element={<ProtectedRoute><AIAssistant /></ProtectedRoute>}
+              element={
+                <ProtectedRoute>
+                  <AIAssistant />
+                </ProtectedRoute>
+              }
             />
             <Route
               path="/job/:name"
-              element={<ProtectedRoute><JobDetail /></ProtectedRoute>}
+              element={
+                <ProtectedRoute>
+                  <JobDetail />
+                </ProtectedRoute>
+              }
             />
 
             <Route path="*" element={<NotFound />} />
