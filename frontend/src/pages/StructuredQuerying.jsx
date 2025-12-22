@@ -71,20 +71,22 @@ export default function StructuredQuerying() {
     fetch("http://localhost:5000/api/pods")
       .then(res => res.json())
       .then(data => {
-  if (!Array.isArray(data)) {
-    console.error("Pods API did not return array:", data);
-    setNamespaces([]);
-    return;
-  }
+        if (!Array.isArray(data)) {
+          console.error("Pods API did not return array:", data);
+          setNamespaces([]);
+          return;
+        }
 
-  const uniqueNs = [...new Set(
-    data
-      .filter(p => p?.metadata?.namespace)
-      .map(p => p.metadata.namespace)
-  )];
+        const uniqueNs = [
+          ...new Set(
+            data
+              .filter(p => p?.metadata?.namespace)
+              .map(p => p.metadata.namespace)
+          ),
+        ];
 
-  setNamespaces(uniqueNs);
-});
+        setNamespaces(uniqueNs);
+      });
   }, []);
 
   /* ---------------- FETCH PODS ---------------- */
@@ -128,13 +130,15 @@ ${selected.cmd}`
   };
 
   return (
-    <div className="p-4 sm:p-6 space-y-8">
+    // 🔑 FIX: page now stretches full height
+    <div className="flex flex-col min-h-screen p-4 sm:p-6 space-y-8">
+
       <h1 className="text-2xl sm:text-3xl font-bold">
         Structured Querying
       </h1>
 
       {/* ---------------- TABS ---------------- */}
-      <div className="flex flex-wrap gap-6 border-b pb-3">
+      <div className="flex flex-wrap gap-6 border-b border-gray-700 pb-3">
         {[
           ["troubleshoot", "Troubleshooting"],
           ["logs", "Logs"],
@@ -143,10 +147,10 @@ ${selected.cmd}`
           <button
             key={key}
             onClick={() => setTab(key)}
-            className={`pb-2 text-sm sm:text-base ${
+            className={`pb-2 text-sm sm:text-base transition ${
               tab === key
-                ? "border-b-2 border-blue-600 font-semibold"
-                : "text-gray-500"
+                ? "border-b-2 border-blue-600 font-semibold text-white"
+                : "text-gray-400 hover:text-gray-200"
             }`}
           >
             {label}
@@ -154,46 +158,16 @@ ${selected.cmd}`
         ))}
       </div>
 
-      {/* ---------------- TROUBLESHOOT ---------------- */}
-      {tab === "troubleshoot" && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <Card>
-            <h2 className="font-semibold mb-2">Namespace</h2>
-            <Select value={namespace} onChange={e => setNamespace(e.target.value)}>
-              <option value="">Select Namespace</option>
-              {namespaces.map(ns => (
-                <option key={ns}>{ns}</option>
-              ))}
-            </Select>
-          </Card>
+      {/* ---------------- CONTENT ---------------- */}
+      <div className="flex-1">
 
-          <Card>
-            <h2 className="font-semibold mb-2">Tool</h2>
-            <Select value={tool} onChange={e => setTool(e.target.value)}>
-              <option value="">Select Tool</option>
-              {troubleshootTools.map(t => (
-                <option key={t.name}>{t.name}</option>
-              ))}
-            </Select>
-          </Card>
-
-          {tool && (
-            <Card className="lg:col-span-3">
-              <pre className="bg-black text-green-400 p-4 rounded h-48 text-xs sm:text-sm overflow-auto">
-                {terminal}
-              </pre>
-            </Card>
-          )}
-        </div>
-      )}
-
-      {/* ---------------- LOGS ---------------- */}
-      {tab === "logs" && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* ---------------- TROUBLESHOOT ---------------- */}
+        {tab === "troubleshoot" && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <Card>
+              <h2 className="font-semibold mb-2">Namespace</h2>
               <Select value={namespace} onChange={e => setNamespace(e.target.value)}>
-                <option value="">Namespace</option>
+                <option value="">Select Namespace</option>
                 {namespaces.map(ns => (
                   <option key={ns}>{ns}</option>
                 ))}
@@ -201,38 +175,76 @@ ${selected.cmd}`
             </Card>
 
             <Card>
-              <Select value={pod} onChange={e => setPod(e.target.value)}>
-                <option value="">Pod</option>
-                {pods.map(p => (
-                  <option key={p}>{p}</option>
+              <h2 className="font-semibold mb-2">Tool</h2>
+              <Select value={tool} onChange={e => setTool(e.target.value)}>
+                <option value="">Select Tool</option>
+                {troubleshootTools.map(t => (
+                  <option key={t.name}>{t.name}</option>
                 ))}
               </Select>
             </Card>
 
-            <Button
-              onClick={fetchLogs}
-              disabled={!pod}
-              className="w-full sm:w-auto flex items-center justify-center gap-2"
-            >
-              <Play size={16} /> Fetch Logs
-            </Button>
+            {tool && (
+              <Card className="lg:col-span-3">
+                <pre className="bg-black text-green-400 p-4 rounded h-48 text-xs sm:text-sm overflow-auto">
+                  {terminal}
+                </pre>
+              </Card>
+            )}
           </div>
+        )}
 
-          <Card>
-            <pre className="bg-[#0D1117] text-gray-200 p-4 h-[60vh] sm:h-80 text-xs sm:text-sm overflow-auto rounded">
-              {logs}
-            </pre>
-          </Card>
-        </div>
-      )}
+        {/* ---------------- LOGS ---------------- */}
+        {tab === "logs" && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <Card>
+                <Select value={namespace} onChange={e => setNamespace(e.target.value)}>
+                  <option value="">Namespace</option>
+                  {namespaces.map(ns => (
+                    <option key={ns}>{ns}</option>
+                  ))}
+                </Select>
+              </Card>
 
-      {/* ---------------- METRICS ---------------- */}
-      {tab === "metrics" && (
-        <div className="space-y-6">
-          {[["CPU Usage", cpuData, "#22C55E"],
-            ["Memory Usage", memoryData, "#3B82F6"],
-            ["Requests", requestData, "#F59E0B"]]
-            .map(([title, data, color]) => (
+              <Card>
+                <Select value={pod} onChange={e => setPod(e.target.value)}>
+                  <option value="">Pod</option>
+                  {pods.map(p => (
+                    <option key={p}>{p}</option>
+                  ))}
+                </Select>
+              </Card>
+
+              <Button
+                onClick={fetchLogs}
+                disabled={!pod}
+                className="flex items-center justify-center gap-2"
+              >
+                <Play size={16} /> Fetch Logs
+              </Button>
+            </div>
+
+            <Card>
+              {/* 🔑 FIX: logs area adapts to screen height */}
+              <pre className="bg-[#0D1117] text-gray-200 p-4
+                              min-h-[40vh] max-h-[60vh]
+                              text-xs sm:text-sm
+                              overflow-auto rounded">
+                {logs}
+              </pre>
+            </Card>
+          </div>
+        )}
+
+        {/* ---------------- METRICS ---------------- */}
+        {tab === "metrics" && (
+          <div className="space-y-6">
+            {[
+              ["CPU Usage", cpuData, "#22C55E"],
+              ["Memory Usage", memoryData, "#3B82F6"],
+              ["Requests", requestData, "#F59E0B"],
+            ].map(([title, data, color]) => (
               <Card key={title}>
                 <h2 className="font-semibold mb-2">{title}</h2>
                 <ResponsiveContainer width="100%" height={220}>
@@ -240,13 +252,19 @@ ${selected.cmd}`
                     <XAxis dataKey="time" />
                     <YAxis />
                     <Tooltip />
-                    <Line dataKey="value" stroke={color} strokeWidth={2} dot={false} />
+                    <Line
+                      dataKey="value"
+                      stroke={color}
+                      strokeWidth={2}
+                      dot={false}
+                    />
                   </LineChart>
                 </ResponsiveContainer>
               </Card>
             ))}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

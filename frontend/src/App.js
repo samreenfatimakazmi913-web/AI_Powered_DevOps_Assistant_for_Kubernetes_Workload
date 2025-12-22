@@ -14,6 +14,7 @@ import AboutPage from "./pages/AboutPage";
 
 import Sidebar from "./components/Sidebar";
 import Topbar from "./components/Topbar";
+import Footer from "./components/Footer"; // ✅ FOOTER
 import { ThemeProvider } from "./theme/ThemeProvider";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
@@ -28,45 +29,56 @@ function Layout({ children }) {
     location.pathname === "/about";
 
   return (
-    <div className="min-h-screen flex bg-gray-100 dark:bg-[#0b111b] text-gray-900 dark:text-gray-200">
-      {!hideNav && (
-        <>
-          {/* Desktop Sidebar */}
-          <div className="hidden md:block">
-            <Sidebar />
-          </div>
+    <div className="min-h-screen bg-gray-100 dark:bg-[#0b111b] text-gray-900 dark:text-gray-200">
 
-          {/* Mobile overlay */}
-          {sidebarOpen && (
+      {/* ================= APP BODY ================= */}
+      <div className="flex min-h-screen">
+
+        {!hideNav && (
+          <>
+            {/* Desktop Sidebar */}
+            <div className="hidden md:block">
+              <Sidebar />
+            </div>
+
+            {/* Mobile overlay */}
+            {sidebarOpen && (
+              <div
+                className="fixed inset-0 bg-black/40 z-40 md:hidden"
+                onClick={() => setSidebarOpen(false)}
+              />
+            )}
+
+            {/* Mobile Sidebar */}
             <div
-              className="fixed inset-0 bg-black/40 z-40 md:hidden"
-              onClick={() => setSidebarOpen(false)}
-            />
+              className={`fixed z-50 inset-y-0 left-0 w-64 transform
+                bg-white dark:bg-gray-900
+                transition-transform md:hidden
+                ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
+            >
+              <Sidebar onClose={() => setSidebarOpen(false)} />
+            </div>
+          </>
+        )}
+
+        {/* ================= MAIN CONTENT ================= */}
+        <div className="flex-1 flex flex-col min-h-screen">
+          {!hideNav && (
+            <Topbar onMenuClick={() => setSidebarOpen(true)} />
           )}
 
-          {/* Mobile Sidebar */}
-          <div
-            className={`fixed z-50 inset-y-0 left-0 w-64 transform
-              bg-white dark:bg-gray-900
-              transition-transform md:hidden
-              ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
+          <main
+            className={`flex-1 ${
+              hideNav ? "" : "p-4 md:p-6"
+            } bg-gray-50 dark:bg-[#0b111b] transition-colors`}
           >
-            <Sidebar onClose={() => setSidebarOpen(false)} />
-          </div>
-        </>
-      )}
-
-      <div className="flex-1 flex flex-col min-h-screen">
-        {!hideNav && <Topbar onMenuClick={() => setSidebarOpen(true)} />}
-
-        <main
-          className={`flex-1 ${
-            hideNav ? "" : "p-4 md:p-6"
-          } bg-gray-50 dark:bg-[#0b111b] transition-colors`}
-        >
-          {children}
-        </main>
+            {children}
+          </main>
+        </div>
       </div>
+
+      {/* ================= FULL WIDTH FOOTER ================= */}
+      <Footer />
     </div>
   );
 }
@@ -77,6 +89,7 @@ export default function App() {
       <BrowserRouter>
         <Layout>
           <Routes>
+
             {/* -------- PUBLIC -------- */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/about" element={<AboutPage />} />
@@ -91,6 +104,7 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/structured"
               element={
@@ -99,6 +113,7 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/nodes"
               element={
@@ -107,6 +122,7 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/assistant"
               element={
@@ -115,6 +131,7 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/job/:name"
               element={
