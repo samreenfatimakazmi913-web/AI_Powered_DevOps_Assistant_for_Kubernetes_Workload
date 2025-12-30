@@ -2,13 +2,22 @@
 // backend/index.js
 // ===============================
 
+require("dotenv").config();     // ENV CONFIG
+const connectDB = require("./config/db");     // DB IMPORT
+
 const express = require("express");
 const cors = require("cors");
 const k8s = require("@kubernetes/client-node");
 
+connectDB(); //  DB CONNECT
+
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use("/api/teams", require("./routes/teamRoutes"));
+app.use("/api/users", require("./routes/userRoutes"));
+app.use("/api/auth", require("./routes/authRoutes"));
+
 
 // ---------------- K8s CONFIG ----------------
 const kc = new k8s.KubeConfig();

@@ -3,6 +3,8 @@ import React, { useState } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 
 import Dashboard from "./pages/Dashboard";
+import AdminDashboard from "./pages/AdminDashboard";
+
 import StructuredQuerying from "./pages/StructuredQuerying";
 import Nodes from "./pages/Nodes";
 import AIAssistant from "./pages/AIAssistant";
@@ -104,6 +106,16 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
+
+    <Route
+  path="/admin"
+  element={
+    <ProtectedRoute adminOnly>
+      <AdminDashboard />
+    </ProtectedRoute>
+  }
+/>
+
 
             <Route
               path="/structured"

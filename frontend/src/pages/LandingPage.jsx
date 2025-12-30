@@ -64,7 +64,7 @@ export default function LandingPage() {
 
           <div className="hidden md:block">
             <img
-              src="/dashboard-preview.png"
+              src="/bg.png"
               alt="Dashboard Preview"
               className="rounded-2xl shadow-2xl rotate-2"
             />
