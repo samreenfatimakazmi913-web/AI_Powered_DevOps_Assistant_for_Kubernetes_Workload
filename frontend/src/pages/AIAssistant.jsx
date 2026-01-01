@@ -1,124 +1,166 @@
 import React, { useState } from "react";
+import PodTable from "../components/ai/PodTable";
+import LogViewer from "../components/ai/LogViewer";
 
 export default function AIAssistant() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
 
   async function sendMessage() {
-  if (!input.trim()) return;
+    if (!input.trim() || loading) return;
 
-  const userMsg = { sender: "user", text: input };
-  setMessages(prev => [...prev, userMsg]);
-
-  const res = await fetch("http://localhost:5000/api/ai/query", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message: input })
-  });
-
-  const data = await res.json();
-
-  setMessages(prev => [
-    ...prev,
-    { sender: "bot", text: data.reply }
-  ]);
-
-  if (data.data) {
+    // USER MESSAGE
     setMessages(prev => [
       ...prev,
-      {
-        sender: "bot",
-        text: JSON.stringify(data.data, null, 2)
-      }
+      { sender: "user", type: "text", content: input }
     ]);
+
+    setLoading(true);
+
+    try {
+      const res = await fetch("http://localhost:5000/api/ai/query", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: input })
+      });
+
+      const data = await res.json();
+
+      // AI TEXT RESPONSE
+      setMessages(prev => [
+        ...prev,
+        { sender: "bot", type: "text", content: data.reply }
+      ]);
+
+      // PODS TABLE
+      if (Array.isArray(data.data)) {
+        setMessages(prev => [
+          ...prev,
+          { sender: "bot", type: "pods", content: data.data }
+        ]);
+      }
+
+      // LOG VIEWER
+      if (typeof data.data === "string") {
+        setMessages(prev => [
+          ...prev,
+          { sender: "bot", type: "logs", content: data.data }
+        ]);
+      }
+
+    } catch (err) {
+      setMessages(prev => [
+        ...prev,
+        {
+          sender: "bot",
+          type: "text",
+          content: "Something went wrong while processing your request."
+        }
+      ]);
+    }
+
+    setLoading(false);
+    setInput("");
   }
 
-  setInput("");
-}
-
-
-  const hour = new Date().getHours();
-  const greeting =
-    hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";
-
   return (
-    <div className="flex flex-col h-full w-full max-h-[calc(100vh-90px)]">
+    <div className="flex flex-col h-full">
 
-      {/* CHAT AREA */}
+      {/* ================= CHAT AREA ================= */}
       <div className="
-        flex-1 overflow-y-auto p-4 rounded-xl
-        bg-white dark:bg-[#0f172a]
-        border border-gray-200 dark:border-gray-800
-        transition-colors
+        flex-1 overflow-y-auto p-4
+        bg-gray-50 dark:bg-[#0b111b]
+        rounded-xl
       ">
 
-        {/* 🟢 WELCOME STATE */}
+        {/* EMPTY STATE */}
         {messages.length === 0 && (
-          <div className="h-full flex flex-col items-center justify-center text-center px-4">
-            <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100">
-              {greeting}, Samreen 👋
-            </h2>
-
-            <p className="mt-2 text-gray-600 dark:text-gray-400 max-w-md">
-              Ask anything about your Kubernetes cluster —  
-              pods, logs, deployments, troubleshooting, or performance.
-            </p>
-
-            <div className="mt-6 text-sm text-gray-500 dark:text-gray-500">
-              Try: <span className="italic">“Show failing pods in default namespace”</span>
+          <div className="h-full flex items-center justify-center text-center">
+            <div className="max-w-md space-y-2">
+              <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                Ask about your Kubernetes cluster
+              </h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                You can ask about pods, jobs, logs, namespaces,
+                or overall cluster health.
+              </p>
             </div>
           </div>
         )}
 
-        {/* 🟢 CHAT MESSAGES */}
+        {/* MESSAGES */}
         {messages.map((msg, i) => (
           <div
             key={i}
-            className={`
-              w-fit max-w-[90%] sm:max-w-[75%]
-              p-3 rounded-xl text-sm leading-relaxed
-              whitespace-pre-wrap break-words break-all
-              mb-3
-              ${
-                msg.sender === "user"
-                  ? "ml-auto bg-k8sBlue text-white"
-                  : "mr-auto bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-200"
-              }
-            `}
+            className={`mb-4 ${msg.sender === "user" ? "text-right" : ""}`}
           >
-            {msg.text}
+
+            {/* TEXT MESSAGE */}
+            {msg.type === "text" && (
+              <div
+                className={`inline-block max-w-[85%] p-3 rounded-xl text-sm
+                ${
+                  msg.sender === "user"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                }`}
+              >
+                {msg.content}
+              </div>
+            )}
+
+            {/* PODS TABLE */}
+            {msg.type === "pods" && (
+              <div className="mt-2">
+                <PodTable pods={msg.content} />
+              </div>
+            )}
+
+            {/* LOG VIEWER */}
+            {msg.type === "logs" && (
+              <div className="mt-2">
+                <LogViewer logs={msg.content} />
+              </div>
+            )}
+
           </div>
         ))}
       </div>
 
-      {/* INPUT */}
-      <div className="mt-4 flex items-center gap-2">
+      {/* ================= INPUT AREA ================= */}
+      <div className="
+        p-4 flex gap-2
+        border-t border-gray-200 dark:border-gray-700
+        bg-white dark:bg-[#0b111b]
+      ">
         <input
-          type="text"
-          placeholder="Ask something about your Kubernetes cluster…"
           value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && sendMessage()}
+          placeholder="Ask about your Kubernetes cluster (pods, jobs, logs, namespaces)…"
           className="
-            flex-1 p-3 rounded-xl
+            flex-1 p-3 rounded-xl border
+            border-gray-300 dark:border-gray-700
             bg-white dark:bg-gray-900
-            border border-gray-300 dark:border-gray-700
-            text-sm text-gray-900 dark:text-gray-100
+            text-gray-900 dark:text-gray-100
             placeholder-gray-500 dark:placeholder-gray-400
-            transition-colors
+            focus:outline-none focus:ring-2 focus:ring-blue-500
           "
         />
 
         <button
           onClick={sendMessage}
+          disabled={loading}
           className="
             px-4 py-2 rounded-xl
             bg-black text-white
             hover:bg-gray-800
-            transition-colors
+            disabled:opacity-50
+            transition
           "
         >
-          ➤
+          {loading ? "..." : "➤"}
         </button>
       </div>
 

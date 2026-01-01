@@ -1,11 +1,14 @@
+require("dotenv").config();
 const fetch = require("node-fetch");
 
+// ✅ CORRECT GROQ API ENDPOINT
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 async function analyzePrompt(prompt) {
   const response = await fetch(GROQ_API_URL, {
     method: "POST",
     headers: {
+      // ✅ API KEY yahan jati hai
       "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
       "Content-Type": "application/json",
     },
@@ -15,15 +18,29 @@ async function analyzePrompt(prompt) {
         {
           role: "system",
           content: `
-You convert user requests into Kubernetes intents.
-Respond ONLY with valid JSON.
-No markdown. No explanations.
+You convert user requests about Kubernetes PODS into structured intent JSON.
 
-Allowed actions:
-list_pods, list_jobs, list_cronjobs, list_namespaces, get_logs
+STRICT DEFINITIONS:
+- successful / completed = Succeeded
+- running / active = Running
+- failed / failing = Failed
+- pending = Pending
+- unhealthy = Failed OR Pending
+- all = no filter
 
-JSON format:
-{"action":"","namespace":"","pod":"","filter":""}
+If user asks "how many", output = "count"
+Otherwise output = "list"
+
+Respond ONLY with JSON.
+No explanations. No markdown.
+
+JSON FORMAT:
+{
+  "resource": "pods",
+  "filter": "successful | running | failed | pending | unhealthy | all",
+  "namespace": "default | <name> | all",
+  "output": "list | count"
+}
 `
         },
         {
@@ -41,20 +58,11 @@ JSON format:
   }
 
   const data = await response.json();
+  const content = data.choices?.[0]?.message?.content;
 
-  if (
-    !data ||
-    !Array.isArray(data.choices) ||
-    !data.choices[0]?.message?.content
-  ) {
-    throw new Error("Invalid Groq response: " + JSON.stringify(data));
-  }
-
-  const content = data.choices[0].message.content;
-
-  const match = content.match(/\{[\s\S]*\}/);
+  const match = content?.match(/\{[\s\S]*\}/);
   if (!match) {
-    throw new Error("AI did not return JSON: " + content);
+    throw new Error("Invalid AI response: " + content);
   }
 
   return JSON.parse(match[0]);
