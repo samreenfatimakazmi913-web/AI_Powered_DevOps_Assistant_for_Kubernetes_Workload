@@ -4,22 +4,38 @@ export default function AIAssistant() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
 
-  function sendMessage() {
-    if (!input.trim()) return;
+  async function sendMessage() {
+  if (!input.trim()) return;
 
-    const userMsg = { sender: "user", text: input };
-    setMessages(prev => [...prev, userMsg]);
+  const userMsg = { sender: "user", text: input };
+  setMessages(prev => [...prev, userMsg]);
 
-    // Placeholder AI response
-    setTimeout(() => {
-      setMessages(prev => [
-        ...prev,
-        { sender: "bot", text: `AI Response for: ${input}` }
-      ]);
-    }, 500);
+  const res = await fetch("http://localhost:5000/api/ai/query", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message: input })
+  });
 
-    setInput("");
+  const data = await res.json();
+
+  setMessages(prev => [
+    ...prev,
+    { sender: "bot", text: data.reply }
+  ]);
+
+  if (data.data) {
+    setMessages(prev => [
+      ...prev,
+      {
+        sender: "bot",
+        text: JSON.stringify(data.data, null, 2)
+      }
+    ]);
   }
+
+  setInput("");
+}
+
 
   const hour = new Date().getHours();
   const greeting =

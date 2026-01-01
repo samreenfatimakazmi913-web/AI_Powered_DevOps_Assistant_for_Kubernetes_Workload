@@ -17,6 +17,7 @@ app.use(express.json());
 app.use("/api/teams", require("./routes/teamRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/auth", require("./routes/authRoutes"));
+app.use("/api/ai", require("./routes/aiRoutes"));
 
 
 // ---------------- K8s CONFIG ----------------
