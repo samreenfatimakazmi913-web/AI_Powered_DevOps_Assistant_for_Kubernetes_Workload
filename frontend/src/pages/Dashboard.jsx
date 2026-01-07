@@ -6,6 +6,15 @@ import React, { useEffect, useState } from "react";
 import { Card } from "../components/ui/card";
 import ResourceUsageCard from "../components/charts/ResourceUsageCard";
 
+import {
+  Layers,
+  Boxes,
+  Clock,
+  Server,
+  Cpu,
+  MemoryStick,
+} from "lucide-react";
+
 const API = "http://127.0.0.1:5000/api";
 
 export default function Dashboard() {
@@ -78,11 +87,27 @@ export default function Dashboard() {
 
   const namespaces = new Set(pods.map(p => p.metadata?.namespace));
 
-  /* ---------------- UI ---------------- */
+  /* ---------------- UI COMPONENTS ---------------- */
 
-  const BreakdownCard = ({ title, stats }) => (
-    <Card className="p-4 sm:p-5 shadow-sm dark:text-gray-200">
-      <h2 className="text-base sm:text-lg font-semibold mb-3">{title}</h2>
+  const BreakdownCard = ({ title, stats, icon: Icon }) => (
+    <Card className="
+      p-4 sm:p-5
+      shadow-sm hover:shadow-md transition
+      dark:text-gray-200
+    ">
+      <div className="flex items-center gap-3 mb-3">
+        <div className="
+          p-2 rounded-lg
+          bg-blue-100 text-blue-600
+          dark:bg-blue-900/40 dark:text-blue-400
+        ">
+          <Icon size={20} />
+        </div>
+
+        <h2 className="text-base sm:text-lg font-semibold">
+          {title}
+        </h2>
+      </div>
 
       <div className="space-y-1 text-sm">
         <div className="flex justify-between">
@@ -111,10 +136,30 @@ export default function Dashboard() {
     </Card>
   );
 
-  const SimpleCard = ({ title, value }) => (
-    <Card className="p-4 sm:p-5 shadow-sm dark:text-gray-200">
-      <h2 className="text-sm sm:text-lg font-semibold">{title}</h2>
-      <div className="text-2xl sm:text-3xl font-bold mt-2">{value}</div>
+  const SimpleCard = ({ title, value, icon: Icon }) => (
+    <Card className="
+      p-4 sm:p-5
+      shadow-sm hover:shadow-md transition
+      dark:text-gray-200
+    ">
+      <div className="flex items-center gap-3">
+        <div className="
+          p-2 rounded-lg
+          bg-gray-100 text-gray-700
+          dark:bg-gray-800 dark:text-gray-300
+        ">
+          <Icon size={22} />
+        </div>
+
+        <div>
+          <h2 className="text-sm sm:text-lg font-semibold">
+            {title}
+          </h2>
+          <div className="text-2xl sm:text-3xl font-bold mt-1">
+            {value}
+          </div>
+        </div>
+      </div>
     </Card>
   );
 
@@ -161,9 +206,21 @@ export default function Dashboard() {
       </h1>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-        <BreakdownCard title="Deployments" stats={deploymentStats} />
-        <BreakdownCard title="Jobs" stats={jobStats} />
-        <BreakdownCard title="CronJobs" stats={cronJobStats} />
+        <BreakdownCard
+          title="Deployments"
+          stats={deploymentStats}
+          icon={Layers}
+        />
+        <BreakdownCard
+          title="Jobs"
+          stats={jobStats}
+          icon={Boxes}
+        />
+        <BreakdownCard
+          title="CronJobs"
+          stats={cronJobStats}
+          icon={Clock}
+        />
       </div>
 
       <h1 className="text-lg sm:text-2xl font-semibold mt-8 dark:text-white">
@@ -171,13 +228,25 @@ export default function Dashboard() {
       </h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
-        <SimpleCard title="Namespaces" value={namespaces.size} />
-        <SimpleCard title="Pods" value={pods.length} />
+        <SimpleCard
+          title="Namespaces"
+          value={namespaces.size}
+          icon={Server}
+        />
+        <SimpleCard
+          title="Pods"
+          value={pods.length}
+          icon={Boxes}
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mt-6">
         <ResourceUsageCard
-          title="CPU Usage"
+          title={
+            <span className="flex items-center gap-2">
+              <Cpu size={18} /> CPU Usage
+            </span>
+          }
           pieData={cpuPie}
           lineData={cpuLine}
           lineColor="#22C55E"
@@ -185,7 +254,11 @@ export default function Dashboard() {
         />
 
         <ResourceUsageCard
-          title="Memory Usage"
+          title={
+            <span className="flex items-center gap-2">
+              <MemoryStick size={18} /> Memory Usage
+            </span>
+          }
           pieData={memPie}
           lineData={memLine}
           lineColor="#3B82F6"

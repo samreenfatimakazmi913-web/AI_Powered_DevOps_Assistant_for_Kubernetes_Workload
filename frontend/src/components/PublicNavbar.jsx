@@ -3,6 +3,9 @@ import { NavLink } from "react-router-dom";
 import { useTheme } from "../theme/ThemeProvider";
 import DevOpsVisualLabLogo from "./DevOpsVisualLabLogo";
 
+import { Sun, Moon } from "lucide-react";
+
+
 export default function PublicNavbar() {
   const { theme, toggleTheme } = useTheme();
   const [open, setOpen] = useState(false);
@@ -42,13 +45,21 @@ export default function PublicNavbar() {
           </NavLink>
 
           <button
-            onClick={toggleTheme}
-            className="text-sm px-3 py-2 rounded-md border border-gray-300
-                       dark:border-gray-700 hover:bg-gray-100
-                       dark:hover:bg-gray-800 transition"
-          >
-            {theme === "dark" ? "Light" : "Dark"}
-          </button>
+  onClick={toggleTheme}
+  className="
+    p-2 rounded-md
+    border border-gray-300 dark:border-gray-700
+    hover:bg-gray-100 dark:hover:bg-gray-800
+    transition
+  "
+  title="Toggle theme"
+>
+  {theme === "dark" ? (
+    <Sun size={18} className="text-yellow-500" />
+  ) : (
+    <Moon size={18} className="text-gray-700 dark:text-gray-300" />
+  )}
+</button>
         </nav>
 
         {/* MOBILE MENU TOGGLE */}

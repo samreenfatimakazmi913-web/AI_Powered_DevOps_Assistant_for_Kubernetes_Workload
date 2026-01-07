@@ -18,6 +18,7 @@ app.use("/api/teams", require("./routes/teamRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/ai", require("./routes/aiRoutes"));
+app.use("/uploads", express.static("uploads"));
 
 
 // ---------------- K8s CONFIG ----------------
@@ -108,6 +109,19 @@ app.get("/api/logs/:namespace/:pod", async (req, res) => {
     });
   }
 });
+
+// ---------------- NAMESPACES ----------------
+app.get("/api/namespaces", async (req, res) => {
+  try {
+    const { items } = await coreApi.listNamespace();
+    const namespaces = items.map(ns => ns.metadata.name);
+    res.json(namespaces);
+  } catch (err) {
+    console.error("❌ NAMESPACE ERROR:", err);
+    res.status(500).json({ error: "Failed to fetch namespaces" });
+  }
+});
+
 
 // ---------------- SERVER ----------------
 const PORT = 5000;

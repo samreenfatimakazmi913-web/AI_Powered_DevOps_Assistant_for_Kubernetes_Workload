@@ -14,7 +14,14 @@ export default function LandingPage() {
   const section7 = useScrollReveal();
 
   return (
-    <div className="relative bg-gray-50 dark:bg-[#0b111b] text-gray-900 dark:text-gray-200 overflow-hidden">
+    <div className="
+  relative
+  min-h-screen
+  flex flex-col
+  bg-gray-50 dark:bg-[#0b111b]
+  text-gray-900 dark:text-gray-200
+">
+
 
       <CursorGlow />
       <PublicNavbar />
@@ -48,13 +55,13 @@ export default function LandingPage() {
                 Get Started
               </a>
 
-              <a
-                href="#dashboard"
-                className="px-6 py-3 rounded-xl border border-gray-300 dark:border-gray-700
-                           hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-              >
-                View Dashboard
-              </a>
+               <a
+    href="#features"
+    className="px-6 py-3 rounded-xl border border-gray-300 dark:border-gray-700
+               hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+  >
+    Explore Features
+  </a>
             </div>
 
             <p className="text-sm text-gray-500">
@@ -91,6 +98,7 @@ export default function LandingPage() {
 
       {/* ================= FEATURES ================= */}
       <section
+      id="features"
         ref={section2}
         className="scroll-hidden py-28 px-6"
       >

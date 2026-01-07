@@ -6,7 +6,18 @@ import React, { useState, useEffect } from "react";
 import { Card } from "../components/ui/card";
 import { Select } from "../components/ui/select";
 import { Button } from "../components/ui/button";
-import { Play } from "lucide-react";
+import {
+  Play,
+  Wrench,
+  FileText,
+  Activity,
+  Database,
+  TerminalSquare,
+  Cpu,
+  HardDrive,
+  ArrowDownCircle
+} from "lucide-react";
+import { ListTree } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -133,29 +144,46 @@ ${selected.cmd}`
     // 🔑 FIX: page now stretches full height
     <div className="flex flex-col min-h-screen p-4 sm:p-6 space-y-8">
 
-      <h1 className="text-2xl sm:text-3xl font-bold">
-        Structured Querying
-      </h1>
+      <div className="flex items-center gap-4">
+ <div className="
+  p-3 rounded-xl
+  bg-blue-100 text-blue-600
+  dark:bg-blue-900/40 dark:text-blue-400
+">
+  <ListTree size={26} />
+</div>
+
+
+  <div>
+    <h1 className="text-2xl sm:text-3xl font-bold">
+      Structured Querying
+    </h1>
+    
+  </div>
+</div>
+
 
       {/* ---------------- TABS ---------------- */}
       <div className="flex flex-wrap gap-6 border-b border-gray-700 pb-3">
         {[
-          ["troubleshoot", "Troubleshooting"],
-          ["logs", "Logs"],
-          ["metrics", "Metrics"],
-        ].map(([key, label]) => (
-          <button
-            key={key}
-            onClick={() => setTab(key)}
-            className={`pb-2 text-sm sm:text-base transition ${
-              tab === key
-                ? "border-b-2 border-blue-600 font-semibold text-white"
-                : "text-gray-400 hover:text-gray-200"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
+  ["troubleshoot", "Troubleshooting", Wrench],
+  ["logs", "Logs", FileText],
+  ["metrics", "Metrics", Activity],
+].map(([key, label, Icon]) => (
+  <button
+    key={key}
+    onClick={() => setTab(key)}
+    className={`pb-2 flex items-center gap-2 text-sm sm:text-base transition ${
+      tab === key
+        ? "border-b-2 border-blue-600 font-semibold text-blue-600"
+        : "text-gray-400 hover:text-gray-200"
+    }`}
+  >
+    <Icon size={16} />
+    {label}
+  </button>
+))}
+
       </div>
 
       {/* ---------------- CONTENT ---------------- */}
@@ -165,7 +193,10 @@ ${selected.cmd}`
         {tab === "troubleshoot" && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <Card>
-              <h2 className="font-semibold mb-2">Namespace</h2>
+              <h2 className="font-semibold mb-2 flex items-center gap-2">
+  <Database size={16} />
+  Namespace
+</h2>
               <Select value={namespace} onChange={e => setNamespace(e.target.value)}>
                 <option value="">Select Namespace</option>
                 {namespaces.map(ns => (
@@ -175,7 +206,10 @@ ${selected.cmd}`
             </Card>
 
             <Card>
-              <h2 className="font-semibold mb-2">Tool</h2>
+              <h2 className="font-semibold mb-2 flex items-center gap-2">
+  <TerminalSquare size={16} />
+  Tool
+</h2>
               <Select value={tool} onChange={e => setTool(e.target.value)}>
                 <option value="">Select Tool</option>
                 {troubleshootTools.map(t => (
@@ -186,10 +220,16 @@ ${selected.cmd}`
 
             {tool && (
               <Card className="lg:col-span-3">
-                <pre className="bg-black text-green-400 p-4 rounded h-48 text-xs sm:text-sm overflow-auto">
-                  {terminal}
-                </pre>
-              </Card>
+  <div className="flex items-center gap-2 mb-2 text-sm text-gray-400">
+    <TerminalSquare size={14} />
+    Generated Debug Command
+  </div>
+
+  <pre className="bg-black text-green-400 p-4 rounded h-48 text-xs sm:text-sm overflow-auto">
+    {terminal}
+  </pre>
+</Card>
+
             )}
           </div>
         )}
@@ -217,12 +257,14 @@ ${selected.cmd}`
               </Card>
 
               <Button
-                onClick={fetchLogs}
-                disabled={!pod}
-                className="flex items-center justify-center gap-2"
-              >
-                <Play size={16} /> Fetch Logs
-              </Button>
+  onClick={fetchLogs}
+  disabled={!pod}
+  className="flex items-center justify-center gap-2"
+>
+  <ArrowDownCircle size={16} />
+  Fetch Logs
+</Button>
+
             </div>
 
             <Card>
@@ -246,7 +288,13 @@ ${selected.cmd}`
               ["Requests", requestData, "#F59E0B"],
             ].map(([title, data, color]) => (
               <Card key={title}>
-                <h2 className="font-semibold mb-2">{title}</h2>
+                <h2 className="font-semibold mb-2 flex items-center gap-2">
+  {title === "CPU Usage" && <Cpu size={16} />}
+  {title === "Memory Usage" && <HardDrive size={16} />}
+  {title === "Requests" && <Activity size={16} />}
+  {title}
+</h2>
+
                 <ResponsiveContainer width="100%" height={220}>
                   <LineChart data={data}>
                     <XAxis dataKey="time" />

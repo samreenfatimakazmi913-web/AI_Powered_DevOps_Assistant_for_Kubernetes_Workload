@@ -1,10 +1,8 @@
-// src/App.jsx
 import React, { useState } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 
 import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
-
 import StructuredQuerying from "./pages/StructuredQuerying";
 import Nodes from "./pages/Nodes";
 import AIAssistant from "./pages/AIAssistant";
@@ -12,150 +10,161 @@ import JobDetail from "./pages/JobDetail";
 import NotFound from "./pages/NotFound";
 import LandingPage from "./pages/LandingPage";
 import AuthPage from "./pages/AuthPage";
+import ResetPassword from "./pages/ResetPassword";
 import AboutPage from "./pages/AboutPage";
 
 import Sidebar from "./components/Sidebar";
 import Topbar from "./components/Topbar";
-import Footer from "./components/Footer"; // ✅ FOOTER
+import Footer from "./components/Footer";
 import { ThemeProvider } from "./theme/ThemeProvider";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
+import PublicLayout from "./layouts/PublicLayout";
+
+
+/* ================= LAYOUT ================= */
+
 function Layout({ children }) {
-  const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // PUBLIC pages (no sidebar/topbar)
-  const hideNav =
-    location.pathname === "/" ||
-    location.pathname === "/auth" ||
-    location.pathname === "/about";
-
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-[#0b111b] text-gray-900 dark:text-gray-200">
-
-      {/* ================= APP BODY ================= */}
+    <div className="min-h-screen bg-gray-100 dark:bg-[#0b111b]">
       <div className="flex min-h-screen">
+        {/* Sidebar */}
+        <div className="hidden md:block">
+          <Sidebar />
+        </div>
 
-        {!hideNav && (
-          <>
-            {/* Desktop Sidebar */}
-            <div className="hidden md:block">
-              <Sidebar />
-            </div>
-
-            {/* Mobile overlay */}
-            {sidebarOpen && (
-              <div
-                className="fixed inset-0 bg-black/40 z-40 md:hidden"
-                onClick={() => setSidebarOpen(false)}
-              />
-            )}
-
-            {/* Mobile Sidebar */}
-            <div
-              className={`fixed z-50 inset-y-0 left-0 w-64 transform
-                bg-white dark:bg-gray-900
-                transition-transform md:hidden
-                ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
-            >
-              <Sidebar onClose={() => setSidebarOpen(false)} />
-            </div>
-          </>
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/40 z-40 md:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
         )}
 
-        {/* ================= MAIN CONTENT ================= */}
-        <div className="flex-1 flex flex-col min-h-screen">
-          {!hideNav && (
-            <Topbar onMenuClick={() => setSidebarOpen(true)} />
-          )}
+        <div
+          className={`fixed z-50 inset-y-0 left-0 w-64 transform
+            bg-white dark:bg-gray-900
+            transition-transform md:hidden
+            ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
+        >
+          <Sidebar onClose={() => setSidebarOpen(false)} />
+        </div>
 
-          <main
-            className={`flex-1 ${
-              hideNav ? "" : "p-4 md:p-6"
-            } bg-gray-50 dark:bg-[#0b111b] transition-colors`}
-          >
+        {/* Main */}
+        <div className="flex-1 flex flex-col">
+          <Topbar onMenuClick={() => setSidebarOpen(true)} />
+          <main className="flex-1 p-4 md:p-6">
             {children}
           </main>
         </div>
       </div>
 
-      {/* ================= FULL WIDTH FOOTER ================= */}
       <Footer />
     </div>
   );
 }
 
+/* ================= APP ================= */
+
 export default function App() {
   return (
     <ThemeProvider>
       <BrowserRouter>
-        <Layout>
-          <Routes>
+        <Routes>
 
-            {/* -------- PUBLIC -------- */}
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/auth" element={<AuthPage />} />
-
-            {/* -------- PROTECTED -------- */}
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-
-    <Route
-  path="/admin"
+          {/* ===== PUBLIC (NO SIDEBAR / TOPBAR) ===== */}
+        <Route
+  path="/"
   element={
-    <ProtectedRoute adminOnly>
-      <AdminDashboard />
-    </ProtectedRoute>
+    <PublicLayout>
+      <LandingPage />
+    </PublicLayout>
   }
 />
 
+<Route
+  path="/about"
+  element={
+    <PublicLayout>
+      <AboutPage />
+    </PublicLayout>
+  }
+/>
 
-            <Route
-              path="/structured"
-              element={
-                <ProtectedRoute>
+          <Route path="/auth" element={<AuthPage />} />
+        
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
+
+          {/* ===== PROTECTED (WITH LAYOUT) ===== */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Dashboard />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute adminOnly>
+                <Layout>
+                  <AdminDashboard />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/structured"
+            element={
+              <ProtectedRoute>
+                <Layout>
                   <StructuredQuerying />
-                </ProtectedRoute>
-              }
-            />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
 
-            <Route
-              path="/nodes"
-              element={
-                <ProtectedRoute>
+          <Route
+            path="/nodes"
+            element={
+              <ProtectedRoute>
+                <Layout>
                   <Nodes />
-                </ProtectedRoute>
-              }
-            />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
 
-            <Route
-              path="/assistant"
-              element={
-                <ProtectedRoute>
+          <Route
+            path="/assistant"
+            element={
+              <ProtectedRoute>
+                <Layout>
                   <AIAssistant />
-                </ProtectedRoute>
-              }
-            />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
 
-            <Route
-              path="/job/:name"
-              element={
-                <ProtectedRoute>
+          <Route
+            path="/job/:name"
+            element={
+              <ProtectedRoute>
+                <Layout>
                   <JobDetail />
-                </ProtectedRoute>
-              }
-            />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
 
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Layout>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </BrowserRouter>
     </ThemeProvider>
   );

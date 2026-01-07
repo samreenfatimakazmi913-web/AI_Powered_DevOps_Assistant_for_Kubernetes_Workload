@@ -6,21 +6,30 @@ const router = express.Router();
 /* ---------------- CREATE TEAM ---------------- */
 router.post("/", async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, namespace } = req.body;
 
-    if (!name) {
-      return res.status(400).json({ error: "Team name required" });
+    if (!name || !namespace) {
+      return res
+        .status(400)
+        .json({ message: "Team name and namespace are required" });
     }
 
-    const exists = await Team.findOne({ name });
+    // Check duplicate name OR namespace
+    const exists = await Team.findOne({
+      $or: [{ name }, { namespace }],
+    });
+
     if (exists) {
-      return res.status(400).json({ error: "Team already exists" });
+      return res
+        .status(409)
+        .json({ message: "Team name or namespace already exists" });
     }
 
-    const team = await Team.create({ name });
+    const team = await Team.create({ name, namespace });
     res.status(201).json(team);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("CREATE TEAM ERROR:", err);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
