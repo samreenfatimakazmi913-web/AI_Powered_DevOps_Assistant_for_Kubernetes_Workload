@@ -1,0 +1,168 @@
+
+# -------------------
+# 1. Service
+# Exposes the apps
+# -------------------
+apiVersion: v1
+kind: Service
+metadata:
+ name: podinfo-svc
+ labels:
+   app: podinfo
+spec:
+ ports:
+   - port: 9898
+     targetPort: 9898
+     name: http
+   - port: 9999
+     targetPort: 9999
+     name: grpc
+ selector:
+   app: podinfo
+---
+# -------------------
+# 2. Deployment
+# Standard stateless workload
+# -------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+ name: podinfo-deployment
+spec:
+ replicas: 2
+ selector:
+   matchLabels:
+     app: podinfo
+     role: backend
+ template:
+   metadata:
+     labels:
+       app: podinfo
+       role: backend
+     annotations:
+       prometheus.io/scrape: "true"
+       prometheus.io/port: "9898"
+   spec:
+     containers:
+       - name: podinfo
+         image: ghcr.io/stefanprodan/podinfo:6.4.0
+         imagePullPolicy: IfNotPresent
+         ports:
+           - name: http
+             containerPort: 9898
+         command: ["./podinfo"]
+         args:
+           - "--level=info"
+           - "--random-delay=true"
+           - "--random-error=true"
+         resources:
+           requests:
+             memory: "64Mi"
+             cpu: "50m"
+           limits:
+             memory: "128Mi"
+             cpu: "100m"
+---
+# -------------------
+# 3. Persistent Volume (Minikube HostPath)
+# REQUIRED for StatefulSet on Minikube with manual control
+# -------------------
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+ name: podinfo-pv-manual
+ labels:
+   type: local
+spec:
+ storageClassName: manual
+ capacity:
+   storage: 1Gi
+ accessModes:
+   - ReadWriteOnce
+ hostPath:
+   path: "/data/podinfo-vol"
+---
+# -------------------
+# 4. StatefulSet
+# Uses the manual HostPath PV defined above
+# -------------------
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+ name: podinfo-stateful
+spec:
+ serviceName: "podinfo-svc"
+ replicas: 1
+ selector:
+   matchLabels:
+     app: podinfo
+     type: stateful
+ template:
+   metadata:
+     labels:
+       app: podinfo
+       type: stateful
+   spec:
+     containers:
+       - name: podinfo
+         image: ghcr.io/stefanprodan/podinfo:6.4.0
+         ports:
+           - containerPort: 9898
+         volumeMounts:
+           - name: data
+             mountPath: /data
+ volumeClaimTemplates:
+   - metadata:
+       name: data
+     spec:
+       accessModes: ["ReadWriteOnce"]
+       storageClassName: manual
+       resources:
+         requests:
+           storage: 1Gi
+---
+# -------------------
+# 5. Job (Reuse Strategy)
+# Uses podinfo image because it is already present in the cluster
+# -------------------
+apiVersion: batch/v1
+kind: Job
+metadata:
+ name: podinfo-batch-job
+spec:
+ ttlSecondsAfterFinished: 100
+ template:
+   spec:
+     containers:
+     - name: batch-client
+       # Reusing the image you already have!
+       image: ghcr.io/stefanprodan/podinfo:6.4.0
+       imagePullPolicy: IfNotPresent
+       command: ["/bin/sh", "-c"]
+       # Use built-in wget to hit the service
+       args: ["echo 'Job Started'; wget -qO- http://podinfo-svc:9898/version; echo ' Job Finished'"]
+     restartPolicy: Never
+ backoffLimit: 2
+---
+# -------------------
+# 6. CronJob (Reuse Strategy)
+# -------------------
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+ name: podinfo-cron-task
+spec:
+ schedule: "*/1 * * * *"
+ jobTemplate:
+   spec:
+     template:
+       spec:
+         containers:
+         - name: logger
+           image: ghcr.io/stefanprodan/podinfo:6.4.0
+           imagePullPolicy: IfNotPresent
+           command:
+           - /bin/sh
+           - -c
+           - echo "CronJob execution at $(date)"
+         restartPolicy: OnFailure
