@@ -1,26 +1,31 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function CursorGlow() {
+  const [pos, setPos] = useState({ x: 0, y: 0 });
+
   useEffect(() => {
-    const cursor = document.createElement("div");
-    cursor.className =
-      "pointer-events-none fixed top-0 left-0 w-6 h-6 rounded-full " +
-      "bg-blue-500/30 blur-xl z-[9999] transition-transform duration-150";
-    document.body.appendChild(cursor);
-
-    const move = (e) => {
-      cursor.style.transform = `translate(${e.clientX - 12}px, ${
-        e.clientY - 12
-      }px)`;
-    };
-
+    const move = (e) => setPos({ x: e.clientX, y: e.clientY });
     window.addEventListener("mousemove", move);
+    document.body.style.cursor = "none";
 
     return () => {
       window.removeEventListener("mousemove", move);
-      document.body.removeChild(cursor);
+      document.body.style.cursor = "auto";
     };
   }, []);
 
-  return null;
+  return (
+    <div
+      className="pointer-events-none fixed z-50"
+      style={{
+        left: pos.x - 6,
+        top: pos.y - 6,
+        width: 12,
+        height: 12,
+        borderRadius: "50%",
+        background: "rgba(168,85,247,0.9)",
+        boxShadow: "0 0 20px rgba(168,85,247,0.6)",
+      }}
+    />
+  );
 }

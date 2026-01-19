@@ -1,7 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Card } from "../components/ui/card";
-import { Button } from "../components/ui/button";
 import FloatingInput from "../components/ui/FloatingInput";
 
 export default function ResetPassword() {
@@ -9,62 +7,62 @@ export default function ResetPassword() {
   const navigate = useNavigate();
   const [password, setPassword] = useState("");
 
+
   const submit = async e => {
     e.preventDefault();
 
-    const res = await fetch(
-      `http://localhost:5000/api/auth/reset-password/${token}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ newPassword: password }),
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/auth/reset-password/${token}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ newPassword: password }),
+        }
+      );
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert("Password updated successfully");
+        navigate("/auth");
+      } else {
+        alert(data.message);
       }
-    );
-
-    const data = await res.json();
-
-    if (res.ok) {
-      alert("Password updated successfully");
-      navigate("/auth");
-    } else {
-      alert(data.message);
+    } catch {
+      alert("Server error");
     }
   };
 
   return (
-    <div
-  className="
-    min-h-screen flex items-center justify-center px-4
-    bg-gradient-to-br
-    from-indigo-500/20 via-purple-500/20 to-blue-500/20
-    dark:from-[#0b111b]
-    dark:via-[#0f172a]
-    dark:to-[#020617]
-    relative overflow-hidden
-  "
->
-  {/* DARK MODE GLOWS */}
-  <div className="hidden dark:block absolute -top-40 -left-40 w-[500px] h-[500px] bg-blue-500/10 blur-3xl rounded-full" />
-  <div className="hidden dark:block absolute top-40 right-0 w-[500px] h-[500px] bg-purple-500/10 blur-3xl rounded-full" />
+    <div className="min-h-screen flex items-center justify-center bg-white px-4">
 
-      <Card
-  className="
-    relative z-10
-    w-full max-w-md
-    p-8
-    rounded-2xl
-    shadow-2xl
-    bg-white/90 dark:bg-gray-900/90
-    backdrop-blur
-    border border-gray-200 dark:border-gray-800
-  "
->
+      {/* CARD */}
+      <div
+        className="
+          w-full max-w-md
+          bg-white
+          border border-black/20
+          rounded-xl
+          p-10
+          shadow-lg
+        "
+      >
+        {/* TITLE */}
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold text-black">
+            Reset Password
+          </h2>
 
-        <h2 className="text-xl font-semibold mb-4">
-          Reset Password
-        </h2>
+          <div className="w-14 h-[3px] bg-[#8B0000] mx-auto mt-3" />
 
-        <form onSubmit={submit} className="space-y-4">
+          <p className="text-sm text-[#7f7f7f] mt-4">
+            Set a new password for your VIEWER account
+          </p>
+        </div>
+
+        {/* FORM */}
+        <form onSubmit={submit} className="space-y-6">
           <FloatingInput
             type="password"
             label="New password"
@@ -73,11 +71,28 @@ export default function ResetPassword() {
             required
           />
 
-          <Button className="w-full">
+          {/* BUTTON */}
+          <button
+            type="submit"
+            className="
+              w-full h-11
+              bg-[#8B0000]
+              text-white
+              rounded-md
+              font-medium
+              hover:opacity-90
+              transition
+            "
+          >
             Update Password
-          </Button>
+          </button>
         </form>
-      </Card>
+
+        {/* FOOTER */}
+        <p className="text-center text-xs text-[#7f7f7f] mt-6">
+          Secure reset • VIEWER
+        </p>
+      </div>
     </div>
   );
 }

@@ -60,7 +60,7 @@ function Layout({ children }) {
         </div>
       </div>
 
-      <Footer />
+      
     </div>
   );
 }

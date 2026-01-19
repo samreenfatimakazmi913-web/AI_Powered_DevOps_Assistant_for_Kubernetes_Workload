@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 
 const API = "http://127.0.0.1:5000/api";
+const RED = "#8B0000";
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);
@@ -90,74 +91,44 @@ export default function Dashboard() {
   /* ---------------- UI COMPONENTS ---------------- */
 
   const BreakdownCard = ({ title, stats, icon: Icon }) => (
-    <Card className="
-      p-4 sm:p-5
-      shadow-sm hover:shadow-md transition
-      dark:text-gray-200
-    ">
+    <Card className="p-5 border border-black/10 shadow-sm hover:shadow-md transition bg-white">
       <div className="flex items-center gap-3 mb-3">
-        <div className="
-          p-2 rounded-lg
-          bg-blue-100 text-blue-600
-          dark:bg-blue-900/40 dark:text-blue-400
-        ">
+        <div className="p-2 rounded-md bg-[#8B0000]/10 text-[#8B0000]">
           <Icon size={20} />
         </div>
-
-        <h2 className="text-base sm:text-lg font-semibold">
-          {title}
-        </h2>
+        <h2 className="text-lg font-semibold text-black">{title}</h2>
       </div>
 
-      <div className="space-y-1 text-sm">
+      <div className="space-y-1 text-sm text-black">
         <div className="flex justify-between">
           <span>Successful</span>
-          <span className="text-green-600 font-semibold">
-            {stats.successful}
-          </span>
+          <span className="font-semibold">{stats.successful}</span>
         </div>
         <div className="flex justify-between">
           <span>In Progress</span>
-          <span className="text-yellow-500 font-semibold">
-            {stats.inProgress}
-          </span>
+          <span className="font-semibold">{stats.inProgress}</span>
         </div>
         <div className="flex justify-between">
           <span>Failed</span>
-          <span className="text-red-600 font-semibold">
-            {stats.unsuccessful}
-          </span>
+          <span className="font-semibold">{stats.unsuccessful}</span>
         </div>
       </div>
 
-      <div className="text-right text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-2">
+      <div className="text-right text-xs text-[#7f7f7f] mt-2">
         Total: <b>{stats.total}</b>
       </div>
     </Card>
   );
 
   const SimpleCard = ({ title, value, icon: Icon }) => (
-    <Card className="
-      p-4 sm:p-5
-      shadow-sm hover:shadow-md transition
-      dark:text-gray-200
-    ">
+    <Card className="p-5 border border-black/10 shadow-sm hover:shadow-md transition bg-white">
       <div className="flex items-center gap-3">
-        <div className="
-          p-2 rounded-lg
-          bg-gray-100 text-gray-700
-          dark:bg-gray-800 dark:text-gray-300
-        ">
+        <div className="p-2 rounded-md bg-[#8B0000]/10 text-[#8B0000]">
           <Icon size={22} />
         </div>
-
         <div>
-          <h2 className="text-sm sm:text-lg font-semibold">
-            {title}
-          </h2>
-          <div className="text-2xl sm:text-3xl font-bold mt-1">
-            {value}
-          </div>
+          <h2 className="text-lg font-semibold text-black">{title}</h2>
+          <div className="text-3xl font-bold mt-1 text-black">{value}</div>
         </div>
       </div>
     </Card>
@@ -193,78 +164,59 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="p-4 sm:p-6 text-gray-500 dark:text-gray-400">
+      <div className="p-6 text-[#7f7f7f]">
         Loading cluster data...
       </div>
     );
   }
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 sm:space-y-8">
-      <h1 className="text-xl sm:text-3xl font-bold dark:text-white">
-        Workload Health
+    <div className="p-6 space-y-8 bg-white min-h-screen">
+
+      <h1 className="text-3xl font-bold text-black">
+        Executive Dashboard
       </h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-        <BreakdownCard
-          title="Deployments"
-          stats={deploymentStats}
-          icon={Layers}
-        />
-        <BreakdownCard
-          title="Jobs"
-          stats={jobStats}
-          icon={Boxes}
-        />
-        <BreakdownCard
-          title="CronJobs"
-          stats={cronJobStats}
-          icon={Clock}
-        />
+      {/* Workloads */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <BreakdownCard title="Deployments" stats={deploymentStats} icon={Layers} />
+        <BreakdownCard title="Jobs" stats={jobStats} icon={Boxes} />
+        <BreakdownCard title="CronJobs" stats={cronJobStats} icon={Clock} />
       </div>
 
-      <h1 className="text-lg sm:text-2xl font-semibold mt-8 dark:text-white">
+      {/* Summary */}
+      <h2 className="text-2xl font-semibold text-black mt-6">
         Cluster Summary
-      </h1>
+      </h2>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
-        <SimpleCard
-          title="Namespaces"
-          value={namespaces.size}
-          icon={Server}
-        />
-        <SimpleCard
-          title="Pods"
-          value={pods.length}
-          icon={Boxes}
-        />
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        <SimpleCard title="Namespaces" value={namespaces.size} icon={Server} />
+        <SimpleCard title="Pods" value={pods.length} icon={Boxes} />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mt-6">
+      {/* Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
         <ResourceUsageCard
-          title={
-            <span className="flex items-center gap-2">
-              <Cpu size={18} /> CPU Usage
-            </span>
-          }
+          title={<span className="flex items-center gap-2">
+            <Cpu size={18} className="text-[#8B0000]" /> CPU Usage
+          </span>}
           pieData={cpuPie}
           lineData={cpuLine}
-          lineColor="#22C55E"
+          lineColor={RED}
           unit=""
         />
 
         <ResourceUsageCard
-          title={
-            <span className="flex items-center gap-2">
-              <MemoryStick size={18} /> Memory Usage
-            </span>
-          }
+          title={<span className="flex items-center gap-2">
+            <MemoryStick size={18} className="text-[#8B0000]" /> Memory Usage
+          </span>}
           pieData={memPie}
           lineData={memLine}
-          lineColor="#3B82F6"
+          lineColor={RED}
           unit="MB"
         />
       </div>
+
     </div>
   );
 }

@@ -102,8 +102,8 @@ export default function AIAssistant() {
                 className={`inline-block max-w-[85%] p-3 rounded-xl text-sm
                 ${
                   msg.sender === "user"
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                    ? "bg-gray-300 text-gray-900"
+  : "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                 }`}
               >
                 {msg.content}
@@ -145,7 +145,7 @@ export default function AIAssistant() {
             bg-white dark:bg-gray-900
             text-gray-900 dark:text-gray-100
             placeholder-gray-500 dark:placeholder-gray-400
-            focus:outline-none focus:ring-2 focus:ring-blue-500
+            focus:outline-none focus:ring-2 focus:ring-[#8B0000]
           "
         />
 

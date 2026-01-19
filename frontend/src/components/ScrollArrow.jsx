@@ -22,7 +22,15 @@ export default function ScrollArrow() {
     <button
       onClick={scrollToTop}
       aria-label="Scroll to top"
-      className="fixed bottom-6 right-6 z-50 w-11 h-11 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg hover:bg-blue-700 transition-all"
+      className="
+        fixed bottom-6 right-6 z-50
+        w-11 h-11 rounded-full
+        bg-[#8B0000] text-white
+        flex items-center justify-center
+        shadow-lg
+        hover:shadow-xl hover:scale-105
+        transition-all duration-300
+      "
     >
       ↑
     </button>

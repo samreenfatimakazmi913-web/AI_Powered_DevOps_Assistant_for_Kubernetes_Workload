@@ -7,7 +7,6 @@ import { Card } from "../components/ui/card";
 import { Select } from "../components/ui/select";
 import { Button } from "../components/ui/button";
 import {
-  Play,
   Wrench,
   FileText,
   Activity,
@@ -15,9 +14,8 @@ import {
   TerminalSquare,
   Cpu,
   HardDrive,
-  ArrowDownCircle
+  ListTree
 } from "lucide-react";
-import { ListTree } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -76,18 +74,15 @@ export default function StructuredQuerying() {
   const [terminal, setTerminal] = useState("");
   const [logs, setLogs] = useState("Logs will appear here...\n");
 
+  const [showMetrics, setShowMetrics] = useState(false);
+
   /* ---------------- FETCH NAMESPACES ---------------- */
 
   useEffect(() => {
     fetch("http://localhost:5000/api/pods")
       .then(res => res.json())
       .then(data => {
-        if (!Array.isArray(data)) {
-          console.error("Pods API did not return array:", data);
-          setNamespaces([]);
-          return;
-        }
-
+        if (!Array.isArray(data)) return;
         const uniqueNs = [
           ...new Set(
             data
@@ -95,7 +90,6 @@ export default function StructuredQuerying() {
               .map(p => p.metadata.namespace)
           ),
         ];
-
         setNamespaces(uniqueNs);
       });
   }, []);
@@ -104,7 +98,6 @@ export default function StructuredQuerying() {
 
   useEffect(() => {
     if (!namespace) return;
-
     fetch("http://localhost:5000/api/pods")
       .then(res => res.json())
       .then(data => {
@@ -131,185 +124,174 @@ ${selected.cmd}`
 
   const fetchLogs = async () => {
     if (!namespace || !pod) return;
-
     setLogs("Fetching logs...\n");
-    const res = await fetch(
-      `http://localhost:5000/api/logs/${namespace}/${pod}`
-    );
+    const res = await fetch(`http://localhost:5000/api/logs/${namespace}/${pod}`);
     const text = await res.text();
     setLogs(text || "No logs available");
   };
 
   return (
-    // 🔑 FIX: page now stretches full height
-    <div className="flex flex-col min-h-screen p-4 sm:p-6 space-y-8">
+    <div className="flex flex-col min-h-screen p-6 space-y-8 bg-gray-50">
 
+      {/* HEADER */}
       <div className="flex items-center gap-4">
- <div className="
-  p-3 rounded-xl
-  bg-blue-100 text-blue-600
-  dark:bg-blue-900/40 dark:text-blue-400
-">
-  <ListTree size={26} />
-</div>
-
-
-  <div>
-    <h1 className="text-2xl sm:text-3xl font-bold">
-      Structured Querying
-    </h1>
-    
-  </div>
-</div>
-
-
-      {/* ---------------- TABS ---------------- */}
-      <div className="flex flex-wrap gap-6 border-b border-gray-700 pb-3">
-        {[
-  ["troubleshoot", "Troubleshooting", Wrench],
-  ["logs", "Logs", FileText],
-  ["metrics", "Metrics", Activity],
-].map(([key, label, Icon]) => (
-  <button
-    key={key}
-    onClick={() => setTab(key)}
-    className={`pb-2 flex items-center gap-2 text-sm sm:text-base transition ${
-      tab === key
-        ? "border-b-2 border-blue-600 font-semibold text-blue-600"
-        : "text-gray-400 hover:text-gray-200"
-    }`}
-  >
-    <Icon size={16} />
-    {label}
-  </button>
-))}
-
+        <div className="p-3 rounded-xl bg-[#8B0000]/10 text-[#8B0000]">
+          <ListTree size={26} />
+        </div>
+        <h1 className="text-3xl font-bold">Structured Querying</h1>
       </div>
 
-      {/* ---------------- CONTENT ---------------- */}
+      {/* TABS */}
+      <div className="flex gap-4 border-b pb-3">
+        {[
+          ["troubleshoot", "Troubleshooting", Wrench],
+          ["logs", "Logs", FileText],
+          ["metrics", "Metrics", Activity],
+        ].map(([key, label, Icon]) => (
+          <button
+            key={key}
+            onClick={() => setTab(key)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm transition
+              ${
+                tab === key
+                  ? "bg-[#8B0000]/10 text-[#8B0000] border border-[#8B0000]/30"
+                  : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-100"
+              }`}
+          >
+            <Icon size={16} className="text-[#8B0000]" />
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* CONTENT */}
       <div className="flex-1">
 
-        {/* ---------------- TROUBLESHOOT ---------------- */}
+        {/* TROUBLESHOOT */}
         {tab === "troubleshoot" && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <Card>
               <h2 className="font-semibold mb-2 flex items-center gap-2">
-  <Database size={16} />
-  Namespace
-</h2>
+                <Database size={16} className="text-[#8B0000]" />
+                Namespace
+              </h2>
               <Select value={namespace} onChange={e => setNamespace(e.target.value)}>
                 <option value="">Select Namespace</option>
-                {namespaces.map(ns => (
-                  <option key={ns}>{ns}</option>
-                ))}
+                {namespaces.map(ns => <option key={ns}>{ns}</option>)}
               </Select>
             </Card>
 
             <Card>
               <h2 className="font-semibold mb-2 flex items-center gap-2">
-  <TerminalSquare size={16} />
-  Tool
-</h2>
+                <TerminalSquare size={16} className="text-[#8B0000]" />
+                Tool
+              </h2>
               <Select value={tool} onChange={e => setTool(e.target.value)}>
                 <option value="">Select Tool</option>
-                {troubleshootTools.map(t => (
-                  <option key={t.name}>{t.name}</option>
-                ))}
+                {troubleshootTools.map(t => <option key={t.name}>{t.name}</option>)}
               </Select>
             </Card>
 
             {tool && (
               <Card className="lg:col-span-3">
-  <div className="flex items-center gap-2 mb-2 text-sm text-gray-400">
-    <TerminalSquare size={14} />
-    Generated Debug Command
-  </div>
-
-  <pre className="bg-black text-green-400 p-4 rounded h-48 text-xs sm:text-sm overflow-auto">
-    {terminal}
-  </pre>
-</Card>
-
+                <pre className="bg-gray-900 text-[#EFCD23] p-4 rounded text-sm overflow-auto">
+                  {terminal}
+                </pre>
+              </Card>
             )}
           </div>
         )}
 
-        {/* ---------------- LOGS ---------------- */}
+        {/* LOGS */}
         {tab === "logs" && (
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <Card>
                 <Select value={namespace} onChange={e => setNamespace(e.target.value)}>
-                  <option value="">Namespace</option>
-                  {namespaces.map(ns => (
-                    <option key={ns}>{ns}</option>
-                  ))}
+                  <option value="">Select Namespace</option>
+                  {namespaces.map(ns => <option key={ns}>{ns}</option>)}
                 </Select>
               </Card>
 
               <Card>
                 <Select value={pod} onChange={e => setPod(e.target.value)}>
-                  <option value="">Pod</option>
-                  {pods.map(p => (
-                    <option key={p}>{p}</option>
-                  ))}
+                  <option value="">Select Pod</option>
+                  {pods.map(p => <option key={p}>{p}</option>)}
                 </Select>
               </Card>
 
               <Button
-  onClick={fetchLogs}
-  disabled={!pod}
-  className="flex items-center justify-center gap-2"
->
-  <ArrowDownCircle size={16} />
-  Fetch Logs
-</Button>
-
+                onClick={fetchLogs}
+                disabled={!pod}
+                className="bg-[#8B0000] hover:bg-[#a00000] text-white"
+              >
+                Fetch Logs
+              </Button>
             </div>
 
             <Card>
-              {/* 🔑 FIX: logs area adapts to screen height */}
-              <pre className="bg-[#0D1117] text-gray-200 p-4
-                              min-h-[40vh] max-h-[60vh]
-                              text-xs sm:text-sm
-                              overflow-auto rounded">
+              <pre className="bg-gray-900 text-gray-200 p-4 min-h-[40vh] rounded overflow-auto">
                 {logs}
               </pre>
             </Card>
           </div>
         )}
 
-        {/* ---------------- METRICS ---------------- */}
+        {/* METRICS */}
         {tab === "metrics" && (
-          <div className="space-y-6">
-            {[
-              ["CPU Usage", cpuData, "#22C55E"],
-              ["Memory Usage", memoryData, "#3B82F6"],
-              ["Requests", requestData, "#F59E0B"],
-            ].map(([title, data, color]) => (
-              <Card key={title}>
-                <h2 className="font-semibold mb-2 flex items-center gap-2">
-  {title === "CPU Usage" && <Cpu size={16} />}
-  {title === "Memory Usage" && <HardDrive size={16} />}
-  {title === "Requests" && <Activity size={16} />}
-  {title}
-</h2>
-
-                <ResponsiveContainer width="100%" height={220}>
-                  <LineChart data={data}>
-                    <XAxis dataKey="time" />
-                    <YAxis />
-                    <Tooltip />
-                    <Line
-                      dataKey="value"
-                      stroke={color}
-                      strokeWidth={2}
-                      dot={false}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <Card>
+                <Select value={namespace} onChange={e => setNamespace(e.target.value)}>
+                  <option value="">Select Namespace</option>
+                  {namespaces.map(ns => <option key={ns}>{ns}</option>)}
+                </Select>
               </Card>
-            ))}
+
+              <Card>
+                <Select value={pod} onChange={e => setPod(e.target.value)}>
+                  <option value="">Select Pod</option>
+                  {pods.map(p => <option key={p}>{p}</option>)}
+                </Select>
+              </Card>
+
+              <Button
+                onClick={() => setShowMetrics(true)}
+                className="bg-[#8B0000] hover:bg-[#a00000] text-white"
+              >
+                Show Metrics
+              </Button>
+            </div>
+
+            {showMetrics && (
+              <div className="space-y-6">
+                {[
+                  ["CPU Usage", cpuData, Cpu],
+                  ["Memory Usage", memoryData, HardDrive],
+                  ["Requests", requestData, Activity],
+                ].map(([title, data, Icon]) => (
+                  <Card key={title}>
+                    <h2 className="font-semibold mb-2 flex items-center gap-2">
+                      <Icon size={16} className="text-[#8B0000]" />
+                      {title}
+                    </h2>
+                    <ResponsiveContainer width="100%" height={220}>
+                      <LineChart data={data}>
+                        <XAxis dataKey="time" />
+                        <YAxis />
+                        <Tooltip />
+                        <Line
+                          dataKey="value"
+                          stroke="#8B0000"
+                          strokeWidth={2}
+                          dot={false}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

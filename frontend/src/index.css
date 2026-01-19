@@ -2,65 +2,73 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Fonts (you can include Inter in index.html via Google Fonts) */
+/* ===============================
+   MONOCHROME DESIGN SYSTEM
+   =============================== */
 :root {
-  --bg: #0B1221;
-  --surface: #111827;
-  --text: #F3F4F6;
-  --muted: #9CA3AF;
-  --k8sBlue: #326CE5;
-  --glass: rgba(255,255,255,0.03);
-}
-
-/* dark class will flip automatically; we keep dark-first in our CSS usage */
-html, body, #root {
-  height: 100%;
-  font-family: Inter, system-ui, sans-serif;
-}
-
-@keyframes gradient-border {
-  0% {
-    background-position: 0% 50%;
-  }
-  100% {
-    background-position: 200% 50%;
-  }
-}
-@keyframes glow-pulse {
-  0%, 100% {
-    opacity: 0.6;
-    filter: blur(6px);
-  }
-  50% {
-    opacity: 1;
-    filter: blur(10px);
-  }
-}
-@keyframes slide-fade {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* small utility */
-.card {
-  background-image: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-  border: 1px solid rgba(255,255,255,0.04);
+  --black: #000000;
+  --white: #ffffff;
+  --gray: #bfbfbf;
 }
 
 /* ===============================
-   Fade-up animation (About page)
+   GLOBAL BASE
    =============================== */
+html, body, #root {
+  height: 100%;
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--white);
+  color: var(--black);
+}
 
+/* ===============================
+   TEXT
+   =============================== */
+p {
+  color: var(--gray);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* HEADINGS */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* ===============================
+   CARDS
+   =============================== */
+.card {
+  background: var(--white);
+  border: 1px solid var(--gray);
+  border-radius: 12px;
+}
+
+/* ===============================
+   BUTTONS
+   =============================== */
+button {
+  background: var(--black);
+  color: var(--white);
+  border: 1px solid var(--black);
+}
+
+button:hover {
+  background: var(--white);
+  color: var(--black);
+}
+
+/* ===============================
+   ANIMATIONS
+   =============================== */
 @keyframes fadeUp {
   from {
     opacity: 0;
-    transform: translateY(32px);
+    transform: translateY(24px);
   }
   to {
     opacity: 1;
@@ -69,49 +77,28 @@ html, body, #root {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0 }
-  to { opacity: 1 }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .animate-fade-up {
-  animation: fadeUp 0.9s ease forwards;
+  animation: fadeUp 0.8s ease forwards;
 }
 
 .animate-fade-in {
   animation: fadeIn 0.6s ease forwards;
 }
-
-.scroll-hidden {
-  opacity: 0;
-  transform: translateY(32px);
+@keyframes fadeUpSoft {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
-.scroll-show {
-  opacity: 1;
-  transform: translateY(0);
-  transition: all 0.8s ease;
+.animate-fade-up {
+  animation: fadeUpSoft 0.7s ease forwards;
 }
-
-/* ===============================
-   GLOBAL TEXT FIX (DARK SAFE)
-   =============================== */
-
-body {
-  @apply text-gray-900 dark:text-gray-200;
-}
-
-/* HEADINGS */
-h1, h2, h3, h4, h5, h6 {
-  @apply text-gray-900 dark:text-gray-100;
-}
-
-/* PARAGRAPHS */
-p {
-  @apply text-gray-600 dark:text-gray-400;
-}
-
-/* LINKS */
-a {
-  @apply text-blue-600 dark:text-blue-400;
-}
-

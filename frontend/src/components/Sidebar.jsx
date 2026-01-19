@@ -31,17 +31,17 @@ export default function Sidebar({ onClose }) {
       className="
         w-64 h-full
         p-6
-        bg-white dark:bg-gray-900
-        border-r border-gray-200 dark:border-gray-800
+        bg-[#0f0f0f]
+        border-r border-gray-800
         flex flex-col
       "
     >
       {/* ================= BRAND ================= */}
       <div className="mb-8">
-        <div className="text-2xl font-bold text-gray-900 dark:text-white">
+        <div className="text-2xl font-bold text-white">
           K8s Assistant
         </div>
-        <div className="text-sm text-gray-500 dark:text-gray-400">
+        <div className="text-sm text-gray-400">
           Cluster overview
         </div>
       </div>
@@ -64,8 +64,8 @@ export default function Sidebar({ onClose }) {
                 transition-all
                 ${
                   isActive
-                    ? "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
-                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    ? "bg-[#8B0000] text-white"
+                    : "text-gray-300 hover:bg-[#1a1a1a] hover:text-white"
                 }
                 `
               }
@@ -74,14 +74,12 @@ export default function Sidebar({ onClose }) {
               <Icon
                 size={18}
                 className="
-                  shrink-0
-                  transition-colors
-                  text-gray-500
-                  group-hover:text-gray-700
-                  dark:text-gray-400
-                  dark:group-hover:text-gray-200
+                shrink-0
+                transition-colors
+                text-[#EFCD23]
+                group-hover:text-white
                 "
-              />
+/>
 
               {/* LABEL */}
               <span>{it.label}</span>
@@ -90,8 +88,8 @@ export default function Sidebar({ onClose }) {
         })}
       </nav>
 
-      {/* ================= FOOTER SPACE ================= */}
-      <div className="mt-auto pt-6 text-xs text-gray-400 dark:text-gray-500">
+      {/* ================= FOOTER ================= */}
+      <div className="mt-auto pt-6 text-xs text-gray-500">
         © Kubernetes Assistant
       </div>
     </aside>

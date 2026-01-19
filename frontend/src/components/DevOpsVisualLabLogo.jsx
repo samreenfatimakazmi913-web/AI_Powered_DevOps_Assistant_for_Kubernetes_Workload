@@ -3,37 +3,29 @@ import React from "react";
 export default function DevOpsVisualLabLogo({ className = "" }) {
   return (
     <div className={`flex items-center gap-3 ${className}`}>
-      {/* Icon */}
+      {/* LOGO MARK */}
       <svg
-        width="34"
-        height="34"
-        viewBox="0 0 24 24"
+        width="36"
+        height="36"
+        viewBox="0 0 64 64"
         fill="none"
-        className="text-blue-600"
         xmlns="http://www.w3.org/2000/svg"
       >
-        <rect x="3" y="3" width="7" height="7" rx="1" fill="currentColor" />
-        <rect x="14" y="3" width="7" height="7" rx="1" fill="currentColor" />
-        <rect x="3" y="14" width="7" height="7" rx="1" fill="currentColor" />
-        <rect
-          x="14"
-          y="14"
-          width="7"
-          height="7"
-          rx="1"
-          fill="currentColor"
-          opacity="0.4"
+        {/* Left stroke */}
+        <path
+          d="M10 12 L28 52 H40 L22 12 Z"
+          fill="#8B0000"
+        />
+        {/* Right stroke */}
+        <path
+          d="M36 12 L54 12 L40 52 H22 Z"
+          fill="#ffffff"
         />
       </svg>
 
-      {/* Text */}
-      <div className="leading-tight">
-        <div className="font-extrabold text-lg text-gray-900 dark:text-white">
-          DevOps Visual Lab
-        </div>
-        <div className="text-xs text-gray-500">
-          Visual DevOps Learning Platform
-        </div>
+      {/* BRAND NAME */}
+      <div className="font-extrabold text-lg tracking-wide text-white">
+        VIEWER
       </div>
     </div>
   );
