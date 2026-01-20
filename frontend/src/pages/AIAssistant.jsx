@@ -140,14 +140,17 @@ export default function AIAssistant() {
           onKeyDown={e => e.key === "Enter" && sendMessage()}
           placeholder="Ask about your Kubernetes cluster (pods, jobs, logs, namespaces)…"
           className="
-            flex-1 p-3 rounded-xl border
-            border-gray-300 dark:border-gray-700
-            bg-white dark:bg-gray-900
-            text-gray-900 dark:text-gray-100
-            placeholder-gray-500 dark:placeholder-gray-400
-            focus:outline-none focus:ring-2 focus:ring-[#8B0000]
-          "
+    flex-1 p-3 rounded-xl border
+    border-gray-300 dark:border-gray-700
+    bg-white dark:bg-gray-900
+    text-gray-900 dark:text-gray-100
+    placeholder-gray-500 dark:placeholder-gray-400
+    focus:outline-none
+    focus:ring-1 focus:ring-gray-300
+    focus:border-gray-400
+  "
         />
+
 
         <button
           onClick={sendMessage}

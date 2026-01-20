@@ -2,9 +2,9 @@
 // src/pages/StructuredQuerying.jsx
 // ===============================
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Card } from "../components/ui/card";
-import { Select } from "../components/ui/select";
+import CustomSelect from "../components/ui/CustomSelect";
 import { Button } from "../components/ui/button";
 import {
   Wrench,
@@ -13,8 +13,7 @@ import {
   Database,
   TerminalSquare,
   Cpu,
-  HardDrive,
-  ListTree
+  HardDrive
 } from "lucide-react";
 import {
   LineChart,
@@ -76,26 +75,24 @@ export default function StructuredQuerying() {
 
   const [showMetrics, setShowMetrics] = useState(false);
 
-  /* ---------------- FETCH NAMESPACES ---------------- */
+  const logsRef = useRef(null);
 
+  /* ---------------- FETCH NAMESPACES ---------------- */
   useEffect(() => {
     fetch("http://localhost:5000/api/pods")
       .then(res => res.json())
       .then(data => {
         if (!Array.isArray(data)) return;
-        const uniqueNs = [
-          ...new Set(
-            data
-              .filter(p => p?.metadata?.namespace)
-              .map(p => p.metadata.namespace)
-          ),
-        ];
+        const uniqueNs = [...new Set(
+          data
+            .filter(p => p?.metadata?.namespace)
+            .map(p => p.metadata.namespace)
+        )];
         setNamespaces(uniqueNs);
       });
   }, []);
 
   /* ---------------- FETCH PODS ---------------- */
-
   useEffect(() => {
     if (!namespace) return;
     fetch("http://localhost:5000/api/pods")
@@ -109,7 +106,6 @@ export default function StructuredQuerying() {
   }, [namespace]);
 
   /* ---------------- TOOL → TERMINAL ---------------- */
-
   useEffect(() => {
     const selected = troubleshootTools.find(t => t.name === tool);
     if (selected && namespace) {
@@ -121,25 +117,25 @@ ${selected.cmd}`
   }, [tool, namespace]);
 
   /* ---------------- FETCH LOGS ---------------- */
-
   const fetchLogs = async () => {
     if (!namespace || !pod) return;
     setLogs("Fetching logs...\n");
-    const res = await fetch(`http://localhost:5000/api/logs/${namespace}/${pod}`);
+
+    const res = await fetch(
+      `http://localhost:5000/api/logs/${namespace}/${pod}`
+    );
     const text = await res.text();
     setLogs(text || "No logs available");
+
+    setTimeout(() => {
+      logsRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 150);
   };
 
   return (
     <div className="flex flex-col min-h-screen p-6 space-y-8 bg-gray-50">
 
-      {/* HEADER */}
-      <div className="flex items-center gap-4">
-        <div className="p-3 rounded-xl bg-[#8B0000]/10 text-[#8B0000]">
-          <ListTree size={26} />
-        </div>
-        <h1 className="text-3xl font-bold">Structured Querying</h1>
-      </div>
+      <h1 className="text-3xl font-bold">Structured Querying</h1>
 
       {/* TABS */}
       <div className="flex gap-4 border-b pb-3">
@@ -152,11 +148,9 @@ ${selected.cmd}`
             key={key}
             onClick={() => setTab(key)}
             className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm transition
-              ${
-                tab === key
-                  ? "bg-[#8B0000]/10 text-[#8B0000] border border-[#8B0000]/30"
-                  : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-100"
-              }`}
+              ${tab === key
+                ? "bg-[#8B0000]/10 text-[#8B0000] border border-[#8B0000]/30"
+                : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-100"}`}
           >
             <Icon size={16} className="text-[#8B0000]" />
             {label}
@@ -164,112 +158,123 @@ ${selected.cmd}`
         ))}
       </div>
 
-      {/* CONTENT */}
-      <div className="flex-1">
+      {/* ---------------- TROUBLESHOOT ---------------- */}
+      {tab === "troubleshoot" && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card>
+            <h2 className="font-semibold mb-2 flex items-center gap-2">
+              <Database size={16} className="text-[#8B0000]" />
+              Namespace
+            </h2>
+            <CustomSelect
+              value={namespace}
+              onChange={setNamespace}
+              options={namespaces}
+              placeholder="Select Namespace"
+            />
+          </Card>
 
-        {/* TROUBLESHOOT */}
-        {tab === "troubleshoot" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <Card>
-              <h2 className="font-semibold mb-2 flex items-center gap-2">
-                <Database size={16} className="text-[#8B0000]" />
-                Namespace
-              </h2>
-              <Select value={namespace} onChange={e => setNamespace(e.target.value)}>
-                <option value="">Select Namespace</option>
-                {namespaces.map(ns => <option key={ns}>{ns}</option>)}
-              </Select>
-            </Card>
+          <Card>
+            <h2 className="font-semibold mb-2 flex items-center gap-2">
+              <TerminalSquare size={16} className="text-[#8B0000]" />
+              Tool
+            </h2>
+            <CustomSelect
+              value={tool}
+              onChange={setTool}
+              options={troubleshootTools.map(t => t.name)}
+              placeholder="Select Tool"
+            />
+          </Card>
 
-            <Card>
-              <h2 className="font-semibold mb-2 flex items-center gap-2">
-                <TerminalSquare size={16} className="text-[#8B0000]" />
-                Tool
-              </h2>
-              <Select value={tool} onChange={e => setTool(e.target.value)}>
-                <option value="">Select Tool</option>
-                {troubleshootTools.map(t => <option key={t.name}>{t.name}</option>)}
-              </Select>
-            </Card>
-
-            {tool && (
-              <Card className="lg:col-span-3">
-                <pre className="bg-gray-900 text-[#EFCD23] p-4 rounded text-sm overflow-auto">
-                  {terminal}
-                </pre>
-              </Card>
-            )}
-          </div>
-        )}
-
-        {/* LOGS */}
-        {tab === "logs" && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <Card>
-                <Select value={namespace} onChange={e => setNamespace(e.target.value)}>
-                  <option value="">Select Namespace</option>
-                  {namespaces.map(ns => <option key={ns}>{ns}</option>)}
-                </Select>
-              </Card>
-
-              <Card>
-                <Select value={pod} onChange={e => setPod(e.target.value)}>
-                  <option value="">Select Pod</option>
-                  {pods.map(p => <option key={p}>{p}</option>)}
-                </Select>
-              </Card>
-
-              <Button
-                onClick={fetchLogs}
-                disabled={!pod}
-                className="bg-[#8B0000] hover:bg-[#a00000] text-white"
-              >
-                Fetch Logs
-              </Button>
-            </div>
-
-            <Card>
-              <pre className="bg-gray-900 text-gray-200 p-4 min-h-[40vh] rounded overflow-auto">
-                {logs}
+          {terminal && (
+            <Card className="md:col-span-2">
+              <pre className="bg-gray-900 text-green-200 p-4 rounded text-sm overflow-auto">
+                {terminal}
               </pre>
             </Card>
+          )}
+        </div>
+      )}
+
+      {/* ---------------- LOGS ---------------- */}
+      {tab === "logs" && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CustomSelect
+                value={namespace}
+                onChange={setNamespace}
+                options={namespaces}
+                placeholder="Select Namespace"
+              />
+            </Card>
+
+            <Card>
+              <CustomSelect
+                value={pod}
+                onChange={setPod}
+                options={pods}
+                placeholder="Select Pod"
+              />
+            </Card>
+
+            <Button
+              onClick={fetchLogs}
+              disabled={!pod}
+              className="px-3 py-2 text-sm bg-[#8B0000] hover:bg-[#720000]"
+            >
+              Fetch Logs
+            </Button>
           </div>
-        )}
 
-        {/* METRICS */}
-        {tab === "metrics" && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <Card>
-                <Select value={namespace} onChange={e => setNamespace(e.target.value)}>
-                  <option value="">Select Namespace</option>
-                  {namespaces.map(ns => <option key={ns}>{ns}</option>)}
-                </Select>
-              </Card>
+          <Card ref={logsRef}>
+            <pre className="
+              bg-[#0b1220] text-gray-100
+              p-4 rounded text-sm
+              h-[60vh] overflow-y-auto
+              whitespace-pre-wrap leading-relaxed
+            ">
+              {logs}
+            </pre>
+          </Card>
+        </div>
+      )}
 
-              <Card>
-                <Select value={pod} onChange={e => setPod(e.target.value)}>
-                  <option value="">Select Pod</option>
-                  {pods.map(p => <option key={p}>{p}</option>)}
-                </Select>
-              </Card>
+      {/* ---------------- METRICS ---------------- */}
+      {tab === "metrics" && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CustomSelect
+                value={namespace}
+                onChange={setNamespace}
+                options={namespaces}
+                placeholder="Select Namespace"
+              />
+            </Card>
 
-              <Button
-                onClick={() => setShowMetrics(true)}
-                className="bg-[#8B0000] hover:bg-[#a00000] text-white"
-              >
-                Show Metrics
-              </Button>
-            </div>
+            <Card>
+              <CustomSelect
+                value={pod}
+                onChange={setPod}
+                options={pods}
+                placeholder="Select Pod"
+              />
+            </Card>
 
-            {showMetrics && (
-              <div className="space-y-6">
-                {[
-                  ["CPU Usage", cpuData, Cpu],
-                  ["Memory Usage", memoryData, HardDrive],
-                  ["Requests", requestData, Activity],
-                ].map(([title, data, Icon]) => (
+            <Button
+              onClick={() => setShowMetrics(true)}
+              className="px-3 py-2 text-sm bg-[#8B0000] hover:bg-[#720000]"
+            >
+              Fetch Metrics
+            </Button>
+          </div>
+
+          {showMetrics && (
+            <div className="space-y-6">
+              {[["CPU Usage", cpuData, Cpu], ["Memory Usage", memoryData, HardDrive], ["Requests", requestData, Activity]]
+                .map(([title, data, Icon]) => (
                   <Card key={title}>
                     <h2 className="font-semibold mb-2 flex items-center gap-2">
                       <Icon size={16} className="text-[#8B0000]" />
@@ -280,21 +285,15 @@ ${selected.cmd}`
                         <XAxis dataKey="time" />
                         <YAxis />
                         <Tooltip />
-                        <Line
-                          dataKey="value"
-                          stroke="#8B0000"
-                          strokeWidth={2}
-                          dot={false}
-                        />
+                        <Line dataKey="value" stroke="#8B0000" strokeWidth={2} dot={false} />
                       </LineChart>
                     </ResponsiveContainer>
                   </Card>
                 ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

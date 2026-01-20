@@ -19,16 +19,23 @@ export default function AdminDashboard() {
     teamId: "",
   });
 
+  /* ================= FETCH DATA (SAFE) ================= */
   useEffect(() => {
     Promise.all([
       fetch(`${API}/teams`).then(r => r.json()),
       fetch(`${API}/users`).then(r => r.json()),
       fetch(`${API}/namespaces`).then(r => r.json()),
-    ]).then(([t, u, n]) => {
-      setTeams(t);
-      setUsers(u);
-      setNamespaces(n);
-    });
+    ])
+      .then(([t, u, n]) => {
+        setTeams(Array.isArray(t) ? t : []);
+        setUsers(Array.isArray(u) ? u : []);
+        setNamespaces(Array.isArray(n) ? n : []);
+      })
+      .catch(() => {
+        setTeams([]);
+        setUsers([]);
+        setNamespaces([]);
+      });
   }, []);
 
   /* ---------------- HELPERS ---------------- */
@@ -46,8 +53,8 @@ export default function AdminDashboard() {
     >
       {active && (
         <>
-          <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500 via-blue-400 to-cyan-400 blur-lg opacity-70 animate-[glow-pulse_3s_ease-in-out_infinite]" />
-          <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500 via-blue-400 to-cyan-400 bg-[length:200%_200%] animate-[gradient-border_4s_linear_infinite]" />
+          <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#8B0000] via-[#720000] to-[#8B0000] blur-lg opacity-60" />
+          <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#8B0000] via-[#720000] to-[#8B0000]" />
         </>
       )}
       <div className="relative z-10">{children}</div>
@@ -56,7 +63,8 @@ export default function AdminDashboard() {
 
   /* ---------------- CREATE TEAM ---------------- */
   const createTeam = async () => {
-    if (!teamForm.name || !teamForm.namespace) return alert("All fields required");
+    if (!teamForm.name || !teamForm.namespace)
+      return alert("All fields required");
 
     const res = await fetch(`${API}/teams`, {
       method: "POST",
@@ -131,7 +139,7 @@ export default function AdminDashboard() {
 
       {/* ================= OVERVIEWS ================= */}
       {activeCard === "teams" && (
-        <Card className="p-6 max-w-4xl animate-[slide-fade_0.35s_ease-out]">
+        <Card className="p-6 max-w-4xl">
           <h2 className="text-xl font-semibold mb-4">Teams Overview</h2>
           {teams.map(team => (
             <div key={team._id} className="border rounded-lg p-4 mb-3">
@@ -142,7 +150,7 @@ export default function AdminDashboard() {
                     Namespace: {team.namespace}
                   </div>
                 </div>
-                <span className="text-sm px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900">
+                <span className="text-sm px-3 py-1 rounded-full bg-[#8B0000]/10 text-[#8B0000]">
                   {getTeamDevelopers(team._id).length} Developers
                 </span>
               </div>
@@ -152,11 +160,8 @@ export default function AdminDashboard() {
       )}
 
       {activeCard === "developers" && (
-        <Card className="p-6 max-w-4xl animate-[slide-fade_0.35s_ease-out]">
+        <Card className="p-6 max-w-4xl">
           <h2 className="text-xl font-semibold mb-4">Developers Overview</h2>
-          {developers.length === 0 && (
-            <p className="text-gray-500 text-sm">No developers created yet.</p>
-          )}
           {developers.map(dev => (
             <div key={dev._id} className="border rounded-lg px-4 py-3 mb-3 flex justify-between">
               <div>
@@ -175,7 +180,7 @@ export default function AdminDashboard() {
       )}
 
       {activeCard === "namespaces" && (
-        <Card className="p-6 max-w-4xl animate-[slide-fade_0.35s_ease-out]">
+        <Card className="p-6 max-w-4xl">
           <h2 className="text-xl font-semibold mb-4">Namespaces Overview</h2>
           {[...new Set(teams.map(t => t.namespace))].map(ns => {
             const team = teams.find(t => t.namespace === ns);
@@ -195,67 +200,87 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="p-6 space-y-4">
           <h2 className="font-semibold">Create Team</h2>
+
           <Input
+            className="focus:ring-2 focus:ring-[#8B0000] focus:border-[#8B0000]"
             placeholder="Team name"
             value={teamForm.name}
             onChange={e => setTeamForm({ ...teamForm, name: e.target.value })}
           />
-         <select
-  className="
-    w-full px-3 py-2 rounded-md
-    bg-white text-gray-900 border
-    dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700
-  "
-  value={teamForm.namespace}
-  onChange={e =>
-    setTeamForm({ ...teamForm, namespace: e.target.value })
-  }
->
-  <option value="" disabled hidden>
-    Select Namespace
-  </option>
 
-  {namespaces.map(ns => (
-    <option key={ns} value={ns}>
-      {ns}
-    </option>
-  ))}
-</select>
+          <select
+            className="
+              w-full px-3 py-2 rounded-md bg-white border
+              focus:outline-none focus:ring-2 focus:ring-[#8B0000] focus:border-[#8B0000]
+            "
+            value={teamForm.namespace}
+            onChange={e =>
+              setTeamForm({ ...teamForm, namespace: e.target.value })
+            }
+          >
+            <option value="" disabled hidden>Select Namespace</option>
+            {Array.isArray(namespaces) &&
+              namespaces.map(ns => (
+                <option key={ns} value={ns}>{ns}</option>
+              ))}
+          </select>
 
-          <Button onClick={createTeam}>Create Team</Button>
+          <Button
+            className="bg-[#8B0000] text-white hover:bg-[#720000]"
+            onClick={createTeam}
+          >
+            Create Team
+          </Button>
         </Card>
 
         <Card className="p-6 space-y-4">
           <h2 className="font-semibold">Create Developer</h2>
-          <Input placeholder="Name" value={userForm.name}
-            onChange={e => setUserForm({ ...userForm, name: e.target.value })} />
-          <Input type="email" placeholder="Email" value={userForm.email}
-            onChange={e => setUserForm({ ...userForm, email: e.target.value })} />
-          <Input type="password" placeholder="Password" autoComplete="new-password" value={userForm.password}
-            onChange={e => setUserForm({ ...userForm, password: e.target.value })} />
+
+          <Input
+            className="focus:ring-2 focus:ring-[#8B0000] focus:border-[#8B0000]"
+            placeholder="Name"
+            value={userForm.name}
+            onChange={e => setUserForm({ ...userForm, name: e.target.value })}
+          />
+          <Input
+            className="focus:ring-2 focus:ring-[#8B0000] focus:border-[#8B0000]"
+            type="email"
+            placeholder="Email"
+            value={userForm.email}
+            onChange={e => setUserForm({ ...userForm, email: e.target.value })}
+          />
+          <Input
+            className="focus:ring-2 focus:ring-[#8B0000] focus:border-[#8B0000]"
+            type="password"
+            placeholder="Password"
+            value={userForm.password}
+            onChange={e => setUserForm({ ...userForm, password: e.target.value })}
+          />
+
           <select
-  className="
-    w-full px-3 py-2 rounded-md
-    bg-white text-gray-900 border
-    dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700
-  "
-  value={userForm.teamId}
-  onChange={e =>
-    setUserForm({ ...userForm, teamId: e.target.value })
-  }
->
-  <option value="" disabled hidden>
-    Assign Team
-  </option>
+            className="
+              w-full px-3 py-2 rounded-md bg-white border
+              focus:outline-none focus:ring-2 focus:ring-[#8B0000] focus:border-[#8B0000]
+            "
+            value={userForm.teamId}
+            onChange={e =>
+              setUserForm({ ...userForm, teamId: e.target.value })
+            }
+          >
+            <option value="" disabled hidden>Assign Team</option>
+            {teams.map(t => (
+              <option key={t._id} value={t._id}>
+                {t.name} — {t.namespace}
+              </option>
+            ))}
+          </select>
 
-  {teams.map(t => (
-    <option key={t._id} value={t._id}>
-      {t.name} — {t.namespace}
-    </option>
-  ))}
-</select>
-
-          <Button onClick={createUser}>Create Developer</Button>
+          <Button
+            className="bg-[#8B0000] text-white hover:bg-[#720000]"
+            onClick={createUser}
+          >
+            Create Developer
+          </Button>
         </Card>
       </div>
     </div>

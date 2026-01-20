@@ -102,3 +102,84 @@ button:hover {
 .animate-fade-up {
   animation: fadeUpSoft 0.7s ease forwards;
 }
+
+
+/* REMOVE BLUE SELECT HIGHLIGHT */
+select option:checked {
+  background: #8B0000 !important;
+  color: white !important;
+}
+
+select:focus {
+  border-color: #8B0000 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 1px #8B0000 !important;
+}
+  
+/* ===============================
+   REMOVE ALL BLUE SELECT COLORS
+   =============================== */
+
+/* select focus border */
+select:focus {
+  border-color: #8B0000 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 1px #8B0000 !important;
+}
+
+/* selected option */
+select option:checked {
+  background-color: #8B0000 !important;
+  color: #ffffff !important;
+}
+
+/* hover option (THIS WAS MISSING) */
+select option:hover {
+  background-color: #8B0000 !important;
+  color: #ffffff !important;
+}
+
+/* active option (when clicking) */
+select option:active {
+  background-color: #8B0000 !important;
+  color: #ffffff !important;
+}
+
+/* Firefox fix */
+select:-moz-focusring {
+  color: transparent;
+  text-shadow: 0 0 0 #000;
+}
+
+/* remove default blue glow */
+select {
+  accent-color: #8B0000;
+}
+
+
+/* ============================= */
+/* REMOVE BLUE SELECT HIGHLIGHT */
+/* ============================= */
+
+select {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* dropdown options */
+select option:checked {
+  background: #8B0000 !important;
+  color: white !important;
+}
+
+select option:hover {
+  background: #8B0000 !important;
+  color: white !important;
+}
+
+/* Firefox */
+select option:checked,
+select option:hover {
+  background-color: #8B0000 !important;
+  color: white !important;
+}

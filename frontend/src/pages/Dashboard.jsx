@@ -5,6 +5,7 @@
 import React, { useEffect, useState } from "react";
 import { Card } from "../components/ui/card";
 import ResourceUsageCard from "../components/charts/ResourceUsageCard";
+import ResourceUsageSection from "../components/resource-usage/ResourceUsageSection";
 
 import {
   Layers,
@@ -27,7 +28,6 @@ export default function Dashboard() {
   const [cronJobs, setCronJobs] = useState([]);
 
   /* ---------------- SAFE FETCH ---------------- */
-
   useEffect(() => {
     const fetchSafe = async (url, setter) => {
       try {
@@ -86,7 +86,10 @@ export default function Dashboard() {
     { total: 0, successful: 0, inProgress: 0, unsuccessful: 0 }
   );
 
-  const namespaces = new Set(pods.map(p => p.metadata?.namespace));
+  /* ---------------- SAFE NAMESPACES ---------------- */
+  const namespaces = [
+    ...new Set(pods.map(p => p.metadata?.namespace).filter(Boolean))
+  ];
 
   /* ---------------- UI COMPONENTS ---------------- */
 
@@ -190,7 +193,7 @@ export default function Dashboard() {
       </h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        <SimpleCard title="Namespaces" value={namespaces.size} icon={Server} />
+        <SimpleCard title="Namespaces" value={namespaces.length} icon={Server} />
         <SimpleCard title="Pods" value={pods.length} icon={Boxes} />
       </div>
 
@@ -214,6 +217,18 @@ export default function Dashboard() {
           lineData={memLine}
           lineColor={RED}
           unit="MB"
+        />
+      </div>
+
+      {/* RESOURCE USAGE (ADVANCED) */}
+      <div>
+        <h2 className="text-lg sm:text-2xl font-semibold mb-4">
+          Resource Usage
+        </h2>
+
+        <ResourceUsageSection
+          pods={pods}
+          namespaces={namespaces}
         />
       </div>
 

@@ -12,11 +12,12 @@ import LandingPage from "./pages/LandingPage";
 import AuthPage from "./pages/AuthPage";
 import ResetPassword from "./pages/ResetPassword";
 import AboutPage from "./pages/AboutPage";
+import Documentation from "./pages/Documentation";
 
 import Sidebar from "./components/Sidebar";
 import Topbar from "./components/Topbar";
 import Footer from "./components/Footer";
-import { ThemeProvider } from "./theme/ThemeProvider";
+
 import ProtectedRoute from "./routes/ProtectedRoute";
 
 import PublicLayout from "./layouts/PublicLayout";
@@ -69,10 +70,8 @@ function Layout({ children }) {
 
 export default function App() {
   return (
-    <ThemeProvider>
       <BrowserRouter>
         <Routes>
-
           {/* ===== PUBLIC (NO SIDEBAR / TOPBAR) ===== */}
         <Route
   path="/"
@@ -93,7 +92,7 @@ export default function App() {
 />
 
           <Route path="/auth" element={<AuthPage />} />
-        
+          <Route path="/docs" element={<Documentation />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
 
           {/* ===== PROTECTED (WITH LAYOUT) ===== */}
@@ -166,6 +165,6 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
-    </ThemeProvider>
+   
   );
 }

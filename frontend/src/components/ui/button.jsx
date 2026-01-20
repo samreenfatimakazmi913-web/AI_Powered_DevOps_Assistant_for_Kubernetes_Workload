@@ -3,11 +3,17 @@ import * as React from "react";
 export function Button({ className = "", ...props }) {
   return (
     <button
-      className={
-        "px-4 py-2 rounded-md font-medium transition bg-blue-600 text-white hover:bg-blue-700 active:scale-95 dark:bg-blue-500 dark:hover:bg-blue-600 " +
-        className
-      }
       {...props}
+      className={
+        `
+        px-4 py-2 rounded-md font-medium text-white
+        bg-[#8B0000] hover:bg-[#720000]
+        active:scale-95 transition
+        focus:outline-none
+        focus:ring-2 focus:ring-[#8B0000]
+        dark:bg-[#8B0000] dark:hover:bg-[#720000]
+        ` + className
+      }
     />
   );
 }
