@@ -1,0 +1,79 @@
+---
+# Namespace for Prometheus demo
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: prometheus-demo
+  labels:
+    name: prometheus-demo
+---
+# Deployment for Prometheus demo app
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus-demo-app
+  namespace: prometheus-demo
+  labels:
+    app: prometheus-demo
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: prometheus-demo
+  template:
+    metadata:
+      labels:
+        app: prometheus-demo
+      annotations:
+        # Standard annotations for Prometheus auto-discovery
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: main
+        image: quay.io/brancz/prometheus-example-app:v0.3.0
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            cpu: 100m
+            memory: 64Mi
+---
+# Service for Prometheus demo app
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-demo-service
+  namespace: prometheus-demo
+  labels:
+    app: prometheus-demo
+spec:
+  type: ClusterIP
+  selector:
+    app: prometheus-demo
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
+---
+# ServiceMonitor for Prometheus metrics scraping
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: prometheus-demo-monitor
+  namespace: prometheus-demo
+  labels:
+    app: prometheus-demo
+spec:
+  selector:
+    matchLabels:
+      app: prometheus-demo
+  endpoints:
+    - port: http
+      interval: 30s
+      path: /metrics

@@ -1,0 +1,167 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── CSS Custom Properties for New Color Palette ── */
+:root {
+  --color-primary: #A82323;
+  --color-primary-dark: #8A1C1C;
+  --color-secondary: #F3F4F6;
+  --color-accent: #F9F9F9;
+  --color-highlight: #FFFFFF;
+  --color-highlight-dark: #F9F9F9;
+  --color-bg: #FFFFFF;
+
+  --color-surface: #FFFFFF;
+  --color-text: #000000;
+  --color-muted: #6B7280;
+  --color-border: #E5E7EB;
+  --color-black: #000000;
+}
+
+.dark {
+  --color-bg: #000000;
+  --color-surface: #111111;
+  --color-text: #F6EFD2;
+  --color-muted: #C5BC96;
+  --color-border: #242424;
+}
+
+/* ── Base layout ── */
+html, body, #root {
+  height: 100%;
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+body {
+  background-image:
+    radial-gradient(circle at top right, rgba(228, 54, 54, 0.12), transparent 24%),
+    radial-gradient(circle at left center, rgba(226, 221, 180, 0.55), transparent 28%);
+  background-attachment: fixed;
+}
+
+.dark body {
+  background-image: none;
+}
+
+/* ── Typography ── */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--color-text);
+}
+
+/* ── Animations ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes fadeUpSoft {
+  from { opacity: 0; transform: translateY(24px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-fade-up   { animation: fadeUpSoft 0.7s ease forwards; }
+.animate-fade-in   { animation: fadeIn    0.6s ease forwards; }
+.animate-pulse     { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+
+/* ── Select element focus ring (Tailwind-friendly) ── */
+select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(228, 54, 54, 0.2);
+}
+
+/* Highlight the currently-selected option (browser native dropdown) */
+select option:checked {
+  background-color: var(--color-primary);
+  color: #ffffff;
+}
+
+/* ── Scrollbar styling ── */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-secondary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-accent);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
+}
+
+/* ── Input focus states ── */
+input:focus, textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(228, 54, 54, 0.15);
+}
+
+/* ── Button base styles ── */
+.btn-primary {
+  background-color: var(--color-primary);
+  color: white;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  background-color: var(--color-primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(228, 54, 54, 0.22);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-highlight {
+  background-color: var(--color-highlight);
+  color: var(--color-black);
+  transition: all 0.2s ease;
+}
+
+.btn-highlight:hover {
+  background-color: var(--color-highlight-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(224, 219, 216, 0.25);
+}
+
+code,
+pre {
+  font-family: "Fira Code", monospace;
+}
+
+pre {
+  border-color: #242424;
+}
+
+mark {
+  background: rgba(228, 54, 54, 0.16);
+  color: var(--color-text);
+}
