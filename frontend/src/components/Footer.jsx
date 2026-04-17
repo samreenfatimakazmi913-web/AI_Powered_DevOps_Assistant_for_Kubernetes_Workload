@@ -14,11 +14,11 @@ export default function Footer() {
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <img
-                src="/logo-v.png"
-                alt="VIEWER logo"
+                src="/logo.png"
+                alt="K8VIEWER logo"
                 className="w-8 h-8"
               />
-              <span className="text-text font-bold text-lg">VIEWER</span>
+              <span className="text-text font-bold text-lg">K8VIEWER</span>
             </div>
 
             <p className="text-sm leading-relaxed text-muted">
@@ -102,7 +102,7 @@ export default function Footer() {
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted">
           <p>
             © {new Date().getFullYear()}{" "}
-            <span className="text-text font-medium">VIEWER</span>
+            <span className="text-text font-medium">K8VIEWER</span>
           </p>
 
           <p>

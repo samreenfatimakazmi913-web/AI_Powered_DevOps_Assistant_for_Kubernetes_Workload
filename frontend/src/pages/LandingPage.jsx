@@ -57,7 +57,7 @@ export default function LandingPage() {
     </div>
 
     <h1 className="text-6xl md:text-7xl font-extrabold tracking-tight text-text">
-      VIEWER
+      K8 VIEWER
     </h1>
 
     <div className="w-24 h-[4px] bg-primary mx-auto rounded-full" />
@@ -127,7 +127,7 @@ export default function LandingPage() {
           </h2>
 
           <p className="text-muted max-w-2xl mx-auto leading-relaxed">
-            VIEWER unifies Kubernetes inspection tools into a single visual
+            K8 VIEWER unifies Kubernetes inspection tools into a single visual
             experience — no context switching, no CLI overload.
           </p>
 

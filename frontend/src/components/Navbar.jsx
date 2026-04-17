@@ -20,7 +20,7 @@ export default function Navbar() {
           <div className="flex items-center gap-2 text-text">
             <div className="w-3 h-3 bg-primary rounded-sm" />
             <h1 className="text-lg font-semibold tracking-tight">
-              DevOps Visual Lab
+              K8Viewer
             </h1>
           </div>
 

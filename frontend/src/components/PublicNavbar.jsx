@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
-import DevOpsVisualLabLogo from "./DevOpsVisualLabLogo";
+import K8ViewerLogo from "./K8ViewerLogo";
 
 export default function PublicNavbar({ variant = "light" }) {
   const [open, setOpen] = useState(false);
@@ -30,9 +30,10 @@ export default function PublicNavbar({ variant = "light" }) {
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
 
           {/* LOGO */}
-          <NavLink to="/" className="flex items-center">
-            <DevOpsVisualLabLogo variant={variant} />
-          </NavLink>
+          <NavLink to="/" className="flex items-center gap-2">
+  <img src="./logo.png" alt="K8Viewer Logo" className="h-8 w-auto" />
+</NavLink>
+          
 
           {/* DESKTOP NAV */}
           <nav className="hidden md:flex items-center gap-10">
