@@ -1,8 +1,13 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { RefreshCw, ScrollText, ChevronRight, Search, X } from "lucide-react";
+import { useLocation } from "react-router-dom";
+
+import DeploymentCharts from "../components/charts/DeploymentCharts";
 
 const API = "http://localhost:5000/api";
+
+
 
 function getUserNamespaces() {
   try {
@@ -153,7 +158,7 @@ function DeploymentsTab({ data }) {
 }
 
 /* ─────────────── PODS ─────────────── */
-function PodsTab({ data }) {
+function PodsTab({ data, selectedPod }) {
   const navigate = useNavigate();
   return (
     <table className="w-full text-sm">
@@ -182,7 +187,14 @@ function PodsTab({ data }) {
           const healthy    = phase === "Running" && readyCount === totalCount && totalCount > 0;
           const succeeded  = phase === "Succeeded";
           return (
-            <tr key={i} className="hover:bg-gray-50 transition">
+            <tr
+  key={i}
+  className={`hover:bg-gray-50 transition ${
+    p.metadata?.name === selectedPod
+      ? "bg-red-50 border-l-4 border-red-500"
+      : ""
+  }`}
+>
               <td className="px-4 py-3 font-mono text-xs text-gray-800 break-all">{p.metadata?.name}</td>
               <td className="px-4 py-3 text-gray-500">{p.metadata?.namespace}</td>
               <td className="px-4 py-3">
@@ -521,6 +533,13 @@ export default function WorkloadsPage() {
   const [loading, setLoading]     = useState(true);
   const [lastRefresh, setLastRefresh] = useState(null);
 
+const location = useLocation(); 
+
+  const params = new URLSearchParams(location.search);
+  const selectedPod = params.get("pod");
+  const selectedNamespace = params.get("ns");
+
+
   // Filters
   const [search, setSearch]           = useState("");
   const [nsFilter, setNsFilter]       = useState("all");
@@ -715,13 +734,16 @@ export default function WorkloadsPage() {
       </div>
 
       {/* ── TABLE ─────────────────────────────────────────────────── */}
+      {activeTab === "deployments" && (
+  <DeploymentCharts data={filtered} />
+)}
       <div className="rounded-xl border border-border bg-surface shadow-soft overflow-x-auto">
         {loading ? (
           <div className="py-16 text-center text-gray-400 text-sm">Loading {currentLabel}…</div>
         ) : (
           <>
             {activeTab === "deployments"  && <DeploymentsTab  data={filtered} />}
-            {activeTab === "pods"         && <PodsTab          data={filtered} />}
+            {activeTab === "pods" && (<PodsTab data={filtered} selectedPod={selectedPod} />)}
             {activeTab === "jobs"         && <JobsTab          data={filtered} />}
             {activeTab === "cronjobs"     && <CronJobsTab      data={filtered} />}
             {activeTab === "daemonsets"   && <DaemonSetsTab    data={filtered} />}

@@ -4,12 +4,16 @@
 
 require("dotenv").config();
 const connectDB = require("./config/db");
-const { runTroubleshootTool, getDebugPodStatus } = require("./services/kube.service");
+const {
+  runTroubleshootTool,
+  getDebugPodStatus,
+} = require("./services/kube.service");
 
 const express = require("express");
 const cors = require("cors");
 const k8s = require("@kubernetes/client-node");
 const axios = require("axios");
+const metricsRoutes = require("./routes/metrics");
 
 connectDB();
 
@@ -21,6 +25,7 @@ app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/ai", require("./routes/aiRoutes"));
 app.use("/uploads", express.static("uploads"));
+app.use("/api", metricsRoutes);
 
 // ---------------- K8s CONFIG ----------------
 const kc = new k8s.KubeConfig();
@@ -30,6 +35,36 @@ const coreApi = kc.makeApiClient(k8s.CoreV1Api);
 const appsApi = kc.makeApiClient(k8s.AppsV1Api);
 const batchApi = kc.makeApiClient(k8s.BatchV1Api);
 const metricsApi = kc.makeApiClient(k8s.CustomObjectsApi);
+
+
+//-------- Save Metrics History in DB ----------//
+
+const MetricsHistory = require("./models/metricsHistory");
+const cron = require("node-cron");
+
+// 🔁 Save metrics every 30 seconds
+cron.schedule("*/30 * * * * *", async () => {
+  try {
+    const res = await fetch("http://127.0.0.1:5000/api/pod-metrics");
+    const data = await res.json();
+
+    const docs = data.map((m) => ({
+      timestamp: new Date(),
+      deployment: m.deployment,
+      namespace: m.namespace,
+      cpu: m.cpu,
+      memory: m.memory,
+    }));
+
+    await MetricsHistory.insertMany(docs);
+
+    console.log("✅ Metrics saved:", docs.length);
+  } catch (err) {
+    console.error("❌ Failed to save metrics", err.message);
+  }
+});
+
+
 
 // ---------------- HEALTH ----------------
 app.get("/", (req, res) => {
@@ -41,7 +76,10 @@ app.get("/", (req, res) => {
 function parseNamespaces(query) {
   const raw = query.namespace || query.namespaces || "";
   if (!raw) return [];
-  return raw.split(",").map(s => s.trim()).filter(Boolean);
+  return raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
 }
 
 // Fetch a namespaced resource for each ns, then flatten; falls back to cluster-wide
@@ -50,8 +88,8 @@ async function multiNsFetch(nsList, singleFn, allFn) {
     const { items } = await allFn();
     return items;
   }
-  const results = await Promise.all(nsList.map(ns => singleFn(ns)));
-  return results.flatMap(r => r.items);
+  const results = await Promise.all(nsList.map((ns) => singleFn(ns)));
+  return results.flatMap((r) => r.items);
 }
 
 // ---------------- BASIC RESOURCES ----------------
@@ -60,8 +98,8 @@ app.get("/api/pods", async (req, res) => {
     const nsList = parseNamespaces(req.query);
     const items = await multiNsFetch(
       nsList,
-      ns => coreApi.listNamespacedPod({ namespace: ns }),
-      () => coreApi.listPodForAllNamespaces()
+      (ns) => coreApi.listNamespacedPod({ namespace: ns }),
+      () => coreApi.listPodForAllNamespaces(),
     );
     res.json(items);
   } catch (err) {
@@ -83,8 +121,8 @@ app.get("/api/deployments", async (req, res) => {
     const nsList = parseNamespaces(req.query);
     const items = await multiNsFetch(
       nsList,
-      ns => appsApi.listNamespacedDeployment({ namespace: ns }),
-      () => appsApi.listDeploymentForAllNamespaces()
+      (ns) => appsApi.listNamespacedDeployment({ namespace: ns }),
+      () => appsApi.listDeploymentForAllNamespaces(),
     );
     res.json(items);
   } catch (err) {
@@ -97,8 +135,8 @@ app.get("/api/daemonsets", async (req, res) => {
     const nsList = parseNamespaces(req.query);
     const items = await multiNsFetch(
       nsList,
-      ns => appsApi.listNamespacedDaemonSet({ namespace: ns }),
-      () => appsApi.listDaemonSetForAllNamespaces()
+      (ns) => appsApi.listNamespacedDaemonSet({ namespace: ns }),
+      () => appsApi.listDaemonSetForAllNamespaces(),
     );
     res.json(items);
   } catch (err) {
@@ -111,8 +149,8 @@ app.get("/api/statefulsets", async (req, res) => {
     const nsList = parseNamespaces(req.query);
     const items = await multiNsFetch(
       nsList,
-      ns => appsApi.listNamespacedStatefulSet({ namespace: ns }),
-      () => appsApi.listStatefulSetForAllNamespaces()
+      (ns) => appsApi.listNamespacedStatefulSet({ namespace: ns }),
+      () => appsApi.listStatefulSetForAllNamespaces(),
     );
     res.json(items);
   } catch (err) {
@@ -125,8 +163,8 @@ app.get("/api/jobs", async (req, res) => {
     const nsList = parseNamespaces(req.query);
     const items = await multiNsFetch(
       nsList,
-      ns => batchApi.listNamespacedJob({ namespace: ns }),
-      () => batchApi.listJobForAllNamespaces()
+      (ns) => batchApi.listNamespacedJob({ namespace: ns }),
+      () => batchApi.listJobForAllNamespaces(),
     );
     res.json(items);
   } catch (err) {
@@ -139,8 +177,8 @@ app.get("/api/cronjobs", async (req, res) => {
     const nsList = parseNamespaces(req.query);
     const items = await multiNsFetch(
       nsList,
-      ns => batchApi.listNamespacedCronJob({ namespace: ns }),
-      () => batchApi.listCronJobForAllNamespaces()
+      (ns) => batchApi.listNamespacedCronJob({ namespace: ns }),
+      () => batchApi.listCronJobForAllNamespaces(),
     );
     res.json(items);
   } catch {
@@ -154,7 +192,7 @@ app.get("/api/namespaces", async (req, res) => {
     const nsList = parseNamespaces(req.query);
     if (nsList.length) return res.json(nsList);
     const { items } = await coreApi.listNamespace();
-    res.json(items.map(ns => ns.metadata.name));
+    res.json(items.map((ns) => ns.metadata.name));
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch namespaces" });
   }
@@ -192,8 +230,8 @@ app.get("/api/pods/:namespace/:pod/containers", async (req, res) => {
       name: req.params.pod,
       namespace: req.params.namespace,
     });
-    const containers = (pod.spec.containers || []).map(c => c.name);
-    const initContainers = (pod.spec.initContainers || []).map(c => c.name);
+    const containers = (pod.spec.containers || []).map((c) => c.name);
+    const initContainers = (pod.spec.initContainers || []).map((c) => c.name);
     res.json({ containers, initContainers });
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch pod containers" });
@@ -206,12 +244,12 @@ app.get("/api/events", async (req, res) => {
     const nsList = parseNamespaces(req.query);
     const items = await multiNsFetch(
       nsList,
-      ns => coreApi.listNamespacedEvent({ namespace: ns }),
-      () => coreApi.listEventForAllNamespaces()
+      (ns) => coreApi.listNamespacedEvent({ namespace: ns }),
+      () => coreApi.listEventForAllNamespaces(),
     );
 
     const events = items
-      .map(e => ({
+      .map((e) => ({
         namespace: e.metadata.namespace,
         type: e.type,
         reason: e.reason,
@@ -255,18 +293,26 @@ const TROUBLESHOOT_TOOL_RULES = {
   },
   netshoot: {
     label: "netshoot",
-    allowedCommands: ["ping", "traceroute", "nslookup", "dig", "host", "ip", "ss", "arp", "cat", "ps", "env", "df", "free", "uname"],
+    allowedCommands: [
+      "ping",
+      "traceroute",
+      "nslookup",
+      "dig",
+      "host",
+      "ip",
+      "ss",
+      "arp",
+      "cat",
+      "ps",
+      "env",
+      "df",
+      "free",
+      "uname",
+    ],
   },
 };
 
-const BLOCKED_SHELL_OPERATORS = [
-  /\&\&/,
-  /\|\|/,
-  /;/,
-  /\|/,
-  /`/,
-  /\$\(/,
-];
+const BLOCKED_SHELL_OPERATORS = [/\&\&/, /\|\|/, /;/, /\|/, /`/, /\$\(/];
 
 function validateTroubleshootCommand(tool, command) {
   if (!tool || !TROUBLESHOOT_TOOL_RULES[tool]) {
@@ -278,7 +324,7 @@ function validateTroubleshootCommand(tool, command) {
     return "Command is required.";
   }
 
-  if (BLOCKED_SHELL_OPERATORS.some(pattern => pattern.test(trimmed))) {
+  if (BLOCKED_SHELL_OPERATORS.some((pattern) => pattern.test(trimmed))) {
     return "Shell chaining and command substitution are not allowed in troubleshooting commands.";
   }
 
@@ -286,7 +332,7 @@ function validateTroubleshootCommand(tool, command) {
   const allowed = TROUBLESHOOT_TOOL_RULES[tool].allowedCommands;
 
   if (!allowed.includes(firstToken)) {
-    const allowedList = allowed.map(cmd => `\`${cmd}\``).join(", ");
+    const allowedList = allowed.map((cmd) => `\`${cmd}\``).join(", ");
     return `The selected tool is ${TROUBLESHOOT_TOOL_RULES[tool].label}. Use only ${allowedList} commands.`;
   }
 
@@ -307,16 +353,28 @@ app.post("/api/troubleshoot/run", async (req, res) => {
   const { namespace, command, tool, userNamespaces = [] } = req.body;
 
   if (!namespace || !command || !tool) {
-    return res.status(400).json({ error: "namespace, tool and command are required" });
+    return res
+      .status(400)
+      .json({ error: "namespace, tool and command are required" });
   }
 
-  if (Array.isArray(userNamespaces) && userNamespaces.length && !userNamespaces.includes(namespace)) {
-    return res.status(403).json({ error: "You do not have access to troubleshoot this namespace." });
+  if (
+    Array.isArray(userNamespaces) &&
+    userNamespaces.length &&
+    !userNamespaces.includes(namespace)
+  ) {
+    return res
+      .status(403)
+      .json({
+        error: "You do not have access to troubleshoot this namespace.",
+      });
   }
 
   // Safety: block dangerous patterns
-  if (BLOCKED_PATTERNS.some(p => p.test(command))) {
-    return res.status(400).json({ error: "Command blocked for safety reasons." });
+  if (BLOCKED_PATTERNS.some((p) => p.test(command))) {
+    return res
+      .status(400)
+      .json({ error: "Command blocked for safety reasons." });
   }
 
   const validationError = validateTroubleshootCommand(tool, command);
@@ -334,60 +392,49 @@ app.post("/api/troubleshoot/run", async (req, res) => {
     const output = await runTroubleshootTool(namespace, command, ac.signal);
     if (!res.headersSent) res.json({ output });
   } catch (err) {
-    if (!res.headersSent) res.status(500).json({ error: err.message || err.toString() });
+    if (!res.headersSent)
+      res.status(500).json({ error: err.message || err.toString() });
   }
 });
 // ---------------- SERVICES ----------------
 app.get("/api/services/:namespace", async (req, res) => {
-
   console.log("SERVICE API HIT:", req.params.namespace);
 
   try {
-
     const namespace = req.params.namespace;
 
     const response = await coreApi.listNamespacedService({
-      namespace: namespace
+      namespace: namespace,
     });
 
-    const services = response.items.map(s => s.metadata.name);
+    const services = response.items.map((s) => s.metadata.name);
 
     res.json(services);
-
   } catch (err) {
-
     console.error("❌ SERVICE ERROR:", err);
 
     res.status(500).json({ error: err.message });
-
   }
 });
 
-
 //--------------------SERVICE PORTS -----------------
 app.get("/api/service-ports/:namespace/:service", async (req, res) => {
-
   try {
-
     const { namespace, service } = req.params;
 
     const response = await coreApi.readNamespacedService({
       name: service,
-      namespace: namespace
+      namespace: namespace,
     });
 
-    const ports = response.spec.ports.map(p => p.port);
+    const ports = response.spec.ports.map((p) => p.port);
 
     res.json(ports);
-
   } catch (err) {
-
     console.error("❌ PORT ERROR:", err);
 
     res.status(500).json({ error: err.message });
-
   }
-
 });
 
 // ---------------- CONTAINER METRICS (per-pod, per-container) ----------------
@@ -398,16 +445,21 @@ app.get("/api/container-metrics", async (req, res) => {
     let items = [];
     if (nsList.length) {
       const responses = await Promise.all(
-        nsList.map(ns =>
+        nsList.map((ns) =>
           metricsApi.listNamespacedCustomObject({
-            group: "metrics.k8s.io", version: "v1beta1", namespace: ns, plural: "pods",
-          })
-        )
+            group: "metrics.k8s.io",
+            version: "v1beta1",
+            namespace: ns,
+            plural: "pods",
+          }),
+        ),
       );
-      items = responses.flatMap(r => r.body?.items || r.items || []);
+      items = responses.flatMap((r) => r.body?.items || r.items || []);
     } else {
       const metricsResponse = await metricsApi.listClusterCustomObject({
-        group: "metrics.k8s.io", version: "v1beta1", plural: "pods",
+        group: "metrics.k8s.io",
+        version: "v1beta1",
+        plural: "pods",
       });
       items = metricsResponse.body?.items || metricsResponse.items || [];
     }
@@ -424,12 +476,12 @@ app.get("/api/container-metrics", async (req, res) => {
       return 0;
     }
 
-    const result = items.map(pod => ({
-      pod:       pod.metadata.name,
+    const result = items.map((pod) => ({
+      pod: pod.metadata.name,
       namespace: pod.metadata.namespace,
-      containers: (pod.containers || []).map(c => ({
-        name:   c.name,
-        cpu:    parseCpu(c.usage?.cpu),
+      containers: (pod.containers || []).map((c) => ({
+        name: c.name,
+        cpu: parseCpu(c.usage?.cpu),
         memory: parseMem(c.usage?.memory),
       })),
     }));
@@ -437,7 +489,12 @@ app.get("/api/container-metrics", async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error("❌ CONTAINER METRICS ERROR:", err.message);
-    res.status(500).json({ error: "Metrics Server unavailable or not installed", details: err.message });
+    res
+      .status(500)
+      .json({
+        error: "Metrics Server unavailable or not installed",
+        details: err.message,
+      });
   }
 });
 
@@ -446,7 +503,9 @@ app.get("/api/container-metrics", async (req, res) => {
 app.get("/api/scrape-metrics", async (req, res) => {
   const { namespace, service, port } = req.query;
   if (!namespace || !service || !port) {
-    return res.status(400).json({ error: "namespace, service, port are required" });
+    return res
+      .status(400)
+      .json({ error: "namespace, service, port are required" });
   }
 
   const url = `http://${service}.${namespace}.svc.cluster.local:${port}/metrics`;
@@ -457,15 +516,21 @@ app.get("/api/scrape-metrics", async (req, res) => {
 
   try {
     const output = await runTroubleshootTool(namespace, command, ac.signal);
-    if (!output || output.startsWith("⚠") || output.toLowerCase().includes("failed")) {
-      return res.json({ noMetrics: true, message: `Service does not expose /metrics at ${url}` });
+    if (
+      !output ||
+      output.startsWith("⚠") ||
+      output.toLowerCase().includes("failed")
+    ) {
+      return res.json({
+        noMetrics: true,
+        message: `Service does not expose /metrics at ${url}`,
+      });
     }
     res.json({ raw: output });
   } catch (err) {
     res.json({ noMetrics: true, message: err.message });
   }
 });
-
 
 // ---------------- POD METRICS (DEPLOYMENT GROUPED - FIXED) ----------------
 app.get("/api/pod-metrics", async (req, res) => {
@@ -476,16 +541,16 @@ app.get("/api/pod-metrics", async (req, res) => {
     let metricItems = [];
     if (nsList.length) {
       const responses = await Promise.all(
-        nsList.map(ns =>
+        nsList.map((ns) =>
           metricsApi.listNamespacedCustomObject({
             group: "metrics.k8s.io",
             version: "v1beta1",
             namespace: ns,
             plural: "pods",
-          })
-        )
+          }),
+        ),
       );
-      metricItems = responses.flatMap(r => r.body?.items || r.items || []);
+      metricItems = responses.flatMap((r) => r.body?.items || r.items || []);
     } else {
       const metricsResponse = await metricsApi.listClusterCustomObject({
         group: "metrics.k8s.io",
@@ -500,7 +565,7 @@ app.get("/api/pod-metrics", async (req, res) => {
 
     // 3️⃣ Create lookup map
     const podMap = {};
-    allPods.forEach(pod => {
+    allPods.forEach((pod) => {
       const key = `${pod.metadata.namespace}/${pod.metadata.name}`;
       podMap[key] = pod;
     });
@@ -509,13 +574,11 @@ app.get("/api/pod-metrics", async (req, res) => {
     const deploymentMap = {};
 
     for (const podMetric of metricItems) {
-
       let cpuTotal = 0;
       let memoryTotal = 0;
 
       // Calculate container usage
       for (const container of podMetric.containers || []) {
-
         const cpuRaw = container.usage?.cpu || "0m";
         const memRaw = container.usage?.memory || "0Ki";
 
@@ -546,7 +609,6 @@ app.get("/api/pod-metrics", async (req, res) => {
       let deploymentName = "System";
 
       if (fullPod?.metadata?.ownerReferences?.length) {
-
         const owner = fullPod.metadata.ownerReferences[0];
 
         if (owner.kind === "ReplicaSet") {
@@ -563,15 +625,10 @@ app.get("/api/pod-metrics", async (req, res) => {
             } else {
               deploymentName = owner.name;
             }
-
           } catch {
             deploymentName = owner.name;
           }
-
-        } else if (
-          owner.kind === "StatefulSet" ||
-          owner.kind === "DaemonSet"
-        ) {
+        } else if (owner.kind === "StatefulSet" || owner.kind === "DaemonSet") {
           deploymentName = owner.name;
         }
       }
@@ -590,6 +647,7 @@ app.get("/api/pod-metrics", async (req, res) => {
 
     res.json(Object.values(deploymentMap));
 
+
   } catch (err) {
     console.error("❌ METRICS ERROR:", err);
     res.status(500).json({
@@ -598,6 +656,71 @@ app.get("/api/pod-metrics", async (req, res) => {
     });
   }
 });
+
+
+async function collectMetrics() {
+  try {
+    const response = await metricsApi.listClusterCustomObject({
+      group: "metrics.k8s.io",
+      version: "v1beta1",
+      plural: "pods",
+    });
+
+    const items = response.body?.items || [];
+
+    for (const pod of items) {
+      let cpuTotal = 0;
+      let memoryTotal = 0;
+
+      for (const c of pod.containers || []) {
+        // CPU
+        if (c.usage?.cpu?.endsWith("m")) {
+          cpuTotal += parseInt(c.usage.cpu);
+        }
+
+        // Memory
+        if (c.usage?.memory?.endsWith("Mi")) {
+          memoryTotal += parseInt(c.usage.memory);
+        }
+      }
+
+      await MetricsHistory.create({
+        deployment: pod.metadata.name,
+        namespace: pod.metadata.namespace,
+        cpu: cpuTotal,
+        memory: memoryTotal,
+        timestamp: new Date(),
+      });
+    }
+
+    console.log("📊 Metrics stored");
+  } catch (err) {
+    console.log("Metrics collection error", err.message);
+  }
+}
+
+// ⏱ Run every 30 seconds
+setInterval(collectMetrics, 30000);
+
+// ------- Get Metrics History ----------------// 
+
+app.get("/api/metrics-history", async (req, res) => {
+  const { range = "1h" } = req.query;
+
+  let timeFilter = new Date();
+
+  if (range === "1h") timeFilter.setHours(timeFilter.getHours() - 1);
+  if (range === "24h") timeFilter.setDate(timeFilter.getDate() - 1);
+  if (range === "2d") timeFilter.setDate(timeFilter.getDate() - 2);
+
+  const data = await MetricsHistory.find({
+    timestamp: { $gte: timeFilter },
+  }).sort({ timestamp: 1 });
+
+  res.json(data);
+});
+
+
 
 // ---------------- PERSISTENT VOLUMES ----------------
 // PVs are cluster-scoped; PVCs are namespace-scoped.
@@ -614,10 +737,12 @@ app.get("/api/volumes", async (req, res) => {
     try {
       pvcs = await multiNsFetch(
         nsList,
-        ns => coreApi.listNamespacedPersistentVolumeClaim({ namespace: ns }),
-        ()  => coreApi.listPersistentVolumeClaimForAllNamespaces()
+        (ns) => coreApi.listNamespacedPersistentVolumeClaim({ namespace: ns }),
+        () => coreApi.listPersistentVolumeClaimForAllNamespaces(),
       );
-    } catch { /* PVCs are optional for the summary */ }
+    } catch {
+      /* PVCs are optional for the summary */
+    }
 
     // Build a quick lookup: PV name → bound PVC info
     const pvcByPv = {};
@@ -626,39 +751,45 @@ app.get("/api/volumes", async (req, res) => {
       if (pvName) pvcByPv[pvName] = pvc;
     }
 
-    const result = pvs.map(pv => {
-      const capacity   = pv.spec?.capacity?.storage || "?";
-      const phase      = pv.status?.phase || "Unknown"; // Available, Bound, Released, Failed
-      const claim      = pv.spec?.claimRef;
-      const boundPvc   = pvcByPv[pv.metadata?.name];
+    const result = pvs.map((pv) => {
+      const capacity = pv.spec?.capacity?.storage || "?";
+      const phase = pv.status?.phase || "Unknown"; // Available, Bound, Released, Failed
+      const claim = pv.spec?.claimRef;
+      const boundPvc = pvcByPv[pv.metadata?.name];
       const accessModes = (pv.spec?.accessModes || []).join(", ");
       const storageClass = pv.spec?.storageClassName || "-";
       const reclaimPolicy = pv.spec?.persistentVolumeReclaimPolicy || "-";
 
       return {
-        name:           pv.metadata?.name,
+        name: pv.metadata?.name,
         capacity,
         phase,
         accessModes,
         storageClass,
         reclaimPolicy,
         claimNamespace: claim?.namespace || null,
-        claimName:      claim?.name      || null,
+        claimName: claim?.name || null,
         // Is this PV accessible in the developer's namespaces?
-        inScope: !nsList.length || (claim?.namespace && nsList.includes(claim.namespace)),
+        inScope:
+          !nsList.length ||
+          (claim?.namespace && nsList.includes(claim.namespace)),
       };
     });
 
     // For namespace-scoped users, only return PVs that are bound to their namespaces
     // (plus unbound ones so they see the full cluster picture)
     const scoped = nsList.length
-      ? result.filter(v => !v.claimNamespace || nsList.includes(v.claimNamespace))
+      ? result.filter(
+          (v) => !v.claimNamespace || nsList.includes(v.claimNamespace),
+        )
       : result;
 
     res.json(scoped);
   } catch (err) {
     console.error("❌ VOLUMES ERROR:", err.message);
-    res.status(500).json({ error: "Failed to fetch volumes", details: err.message });
+    res
+      .status(500)
+      .json({ error: "Failed to fetch volumes", details: err.message });
   }
 });
 
