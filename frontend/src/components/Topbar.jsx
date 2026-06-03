@@ -1,88 +1,298 @@
-// ===============================
 // src/components/Topbar.jsx
-// ===============================
-import React from "react";
-import { useNavigate } from "react-router-dom";
-import { useTheme } from "../theme/ThemeProvider";
+import React, { useEffect, useRef, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 
-export default function Topbar() {
-  const { theme, toggleTheme } = useTheme();
+import {
+  Menu,
+  ChevronDown,
+  Camera,
+  LogOut,
+  KeyRound
+} from "lucide-react";
+
+export default function Topbar({ onMenuClick }) {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const user = JSON.parse(localStorage.getItem("user"));
+  const [open, setOpen] = useState(false);
+  const [showPwdModal, setShowPwdModal] = useState(false);
+  const dropdownRef = useRef(null);
+  const [showEditAvatar, setShowEditAvatar] = useState(false);
+
+  const initials = user?.name
+    ?.split(" ")
+    .map(w => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
   const handleLogout = () => {
-    localStorage.removeItem("auth");
+    localStorage.clear();
     navigate("/auth");
   };
 
+  const routeTitles = {
+    "/dashboard": {
+      title: "Executive Dashboard",
+      subtitle: "",
+    },
+    "/workloads": {
+      title: "Workloads",
+      subtitle: "Deployments, Pods, Jobs, CronJobs, DaemonSets, StatefulSets",
+    },
+    "/events": {
+      title: "Cluster Events",
+      subtitle: "Warnings, errors and state changes across your cluster",
+    },
+    "/logs": {
+      title: "Log Viewer",
+      subtitle: "Browse and search pod logs with container selection",
+    },
+    "/structured": {
+      title: "Structured Querying",
+      subtitle: "Query Kubernetes resources using filters",
+    },
+    "/assistant": {
+      title: "AI Assistant",
+      subtitle: "Ask questions about your cluster",
+    },
+    "/nodes": {
+      title: "Nodes Overview",
+      subtitle: "Cluster infrastructure status",
+    },
+    "/admin/teams": {
+      title: "Team Details",
+      subtitle: "Manage team members and assignments",
+    },
+    "/admin": {
+      title: "Admin Panel",
+      subtitle: "",
+    },
+  };
+
+  const currentRoute =
+    Object.keys(routeTitles)
+      .sort((a, b) => b.length - a.length)
+      .find(r => location.pathname.startsWith(r)) || "/dashboard";
+
+  const { title, subtitle } = routeTitles[currentRoute];
+
+  useEffect(() => {
+    const handler = e => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
   return (
-    <header
-      className="
-        w-full px-6 py-3 flex items-center justify-between
-        border-b bg-white text-gray-900 border-gray-200
-        dark:bg-gray-900 dark:text-gray-200 dark:border-gray-800
-        transition-colors duration-300
-      "
-    >
-      {/* LEFT — Title */}
-      <div className="flex flex-col">
-        <span className="text-lg font-semibold tracking-wide">
-          Executive Dashboard
-        </span>
-        <span className="text-xs text-gray-500 dark:text-gray-400">
-          Kubernetes Workload Overview
-        </span>
-      </div>
+    <>
+      {/* ================= TOPBAR ================= */}
+      <header className="w-full px-6 py-3.5 flex items-center justify-between bg-sidebar border-b border-darkborder">
 
-      {/* RIGHT — Actions */}
-      <div className="flex items-center gap-4">
-        {/* Search */}
-        <input
-          type="text"
-          placeholder="Search resources…"
-          className="
-            px-3 py-2 rounded-md text-sm w-64
-            bg-gray-50 text-gray-900 placeholder-gray-500
-            border border-gray-300
-            focus:outline-none focus:ring-2 focus:ring-blue-500
-            dark:bg-gray-800 dark:text-gray-200 dark:placeholder-gray-400
-            dark:border-gray-700
-            transition-colors
-          "
-        />
-
-        {/* Theme Toggle */}
-        <button
-          onClick={toggleTheme}
-          className="
-            px-3 py-2 rounded-md text-sm font-medium
-            border border-gray-300
-            hover:bg-gray-100
-            dark:border-gray-700 dark:hover:bg-gray-800
-            transition-colors
-          "
-        >
-          {theme === "dark" ? "Light Mode" : "Dark Mode"}
-        </button>
-
-        {/* User */}
-        <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-full flex items-center justify-center
-            font-semibold bg-blue-600 text-white">
-            S
-          </div>
-
+        {/* LEFT */}
+        <div className="flex items-center gap-4">
           <button
-            onClick={handleLogout}
+            onClick={onMenuClick}
+            className="md:hidden p-2 rounded-lg hover:bg-primary/10 transition"
+          >
+            <Menu size={20} className="text-muted" />
+          </button>
+
+          <div className="flex flex-col">
+           <span className="text-xl font-bold text-sidebarText leading-tight">
+             {title}
+           </span>
+            <span className="text-xs text-sidebarMuted hidden sm:block mt-0.5">
+              {subtitle}
+            </span>
+          </div>
+        </div>
+
+        {/* RIGHT */}
+        <div ref={dropdownRef} className="relative">
+          <button
+            onClick={() => setOpen(o => !o)}
             className="
-              text-sm font-medium text-red-500
-              hover:text-red-600
-              transition-colors
+              flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg
+              border border-sidebarActive bg-sidebarActive
+              hover:bg-secondaryHover hover:border-secondaryHover
+              transition
             "
           >
-            Logout
+            {user?.profileImage ? (
+              <img
+                src={`/api${user.profileImage}`}
+                alt="avatar"
+                className="w-7 h-7 rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-7 h-7 rounded-full flex items-center justify-center bg-yellow-400 text-black text-xs font-bold">
+                {initials}
+              </div>
+            )}
+
+            <span className="hidden md:block text-sm font-medium text-white">
+              {user?.name}
+            </span>
+
+            <ChevronDown size={14} className="text-white" />
           </button>
+
+          {/* DROPDOWN */}
+          {open && (
+            <div className="
+              absolute right-0 mt-2 w-64
+              bg-surface border border-border
+              rounded-xl shadow-strong
+              z-50 overflow-hidden
+            ">
+
+              {/* USER INFO */}
+              <div className="px-4 py-3.5 bg-sidebarActive border-b border-border flex gap-3 items-center">
+                {user?.profileImage ? (
+                  <img
+                    src={`/api${user.profileImage}`}
+                    alt="profile"
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center bg-primary text-white font-bold">
+                    {initials}
+                  </div>
+                )}
+
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm text-text truncate">
+                    {user?.name}
+                  </div>
+                  <div className="text-xs text-muted truncate">
+                    {user?.email}
+                  </div>
+                </div>
+              </div>
+
+              {/* ACTIONS */}
+              {[
+                { icon: Camera, label: "Edit Photo", action: () => { setShowEditAvatar(true); setOpen(false); } },
+                { icon: KeyRound, label: "Change Password", action: () => { setShowPwdModal(true); setOpen(false); } },
+              ].map(({ icon: Icon, label, action }) => (
+                <button
+                  key={label}
+                  onClick={action}
+                  className="
+                    w-full px-4 py-2.5 text-sm flex items-center gap-3
+                    text-muted hover:bg-primary/10 hover:text-primary
+                    transition text-left
+                  "
+                >
+                  <Icon size={15} className="text-muted" />
+                  {label}
+                </button>
+              ))}
+
+              <div className="border-t border-border" />
+
+              <button
+                onClick={handleLogout}
+                className="
+                  w-full px-4 py-2.5 text-sm flex items-center gap-3
+                  text-primary hover:bg-primary/10
+                  transition text-left
+                "
+              >
+                <LogOut size={15} />
+                Sign out
+              </button>
+            </div>
+          )}
         </div>
+      </header>
+
+      {/* ================= MODALS ================= */}
+      {showPwdModal && <ChangePasswordModal onClose={() => setShowPwdModal(false)} />}
+      {showEditAvatar && <EditAvatarModal onClose={() => setShowEditAvatar(false)} />}
+    </>
+  );
+}
+
+/* ================= MODALS ================= */
+
+function ChangePasswordModal({ onClose }) {
+  const [form, setForm] = useState({
+    current: "",
+    newPwd: "",
+    confirm: "",
+  });
+
+  const handleSubmit = async e => {
+    e.preventDefault();
+
+    if (!form.current || !form.newPwd || !form.confirm) {
+      return alert("All fields required");
+    }
+
+    if (form.newPwd !== form.confirm) {
+      return alert("Passwords do not match");
+    }
+
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    const res = await fetch("/api/users/change-password", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId: user.id,
+        currentPassword: form.current,
+        newPassword: form.newPwd,
+      }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) return alert(data.message);
+
+    alert("Password updated");
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4">
+      <div className="bg-surface w-full max-w-sm rounded-2xl shadow-strong">
+        <div className="px-6 py-4 border-b border-border">
+          <h2 className="text-text font-semibold">Change Password</h2>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-3">
+          <input className="w-full p-2 border border-border rounded" placeholder="Current password" />
+          <input className="w-full p-2 border border-border rounded" placeholder="New password" />
+          <input className="w-full p-2 border border-border rounded" placeholder="Confirm password" />
+
+          <div className="flex gap-2">
+            <button type="button" onClick={onClose} className="flex-1 border border-border p-2 rounded">
+              Cancel
+            </button>
+            <button className="flex-1 bg-primary text-white p-2 rounded">
+              Update
+            </button>
+          </div>
+        </form>
       </div>
-    </header>
+    </div>
+  );
+}
+
+function EditAvatarModal({ onClose }) {
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4">
+      <div className="bg-surface w-full max-w-sm rounded-2xl shadow-strong p-6">
+        <p className="text-text">Avatar Upload UI</p>
+        <button onClick={onClose} className="mt-4 bg-primary text-white px-4 py-2 rounded">
+          Close
+        </button>
+      </div>
+    </div>
   );
 }
