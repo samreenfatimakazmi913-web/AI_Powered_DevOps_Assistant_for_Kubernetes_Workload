@@ -201,7 +201,7 @@ export default function AIAssistant() {
         body.userNamespace  = userNamespaces[0];    // kept for backward compat
       }
 
-      const res = await fetch("http://localhost:5000/api/ai/query", {
+      const res = await fetch("/api/ai/query", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),

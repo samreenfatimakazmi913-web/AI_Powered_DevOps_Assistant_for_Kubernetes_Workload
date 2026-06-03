@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Search, RefreshCw, Download, ChevronDown } from "lucide-react";
 
-const API = "http://localhost:5000/api";
+const API = "/api";
 
 function getUserNamespaces() {
   try {

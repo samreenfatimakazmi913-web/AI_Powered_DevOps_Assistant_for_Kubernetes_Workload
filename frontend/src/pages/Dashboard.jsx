@@ -20,7 +20,7 @@ import {
   HardDrive,
 } from "lucide-react";
 
-const API = "http://localhost:5000/api";
+const API = "/api";
 
 function getUserNamespaces() {
   try {

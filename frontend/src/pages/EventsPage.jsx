@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { AlertTriangle, RefreshCw, Info, ChevronLeft, ChevronRight } from "lucide-react";
 
-const API = "http://localhost:5000/api";
+const API = "/api";
 const PAGE_SIZE_OPTIONS = [25, 50, 100];
 
 function getUserNamespaces() {

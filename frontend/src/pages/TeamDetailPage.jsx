@@ -6,7 +6,7 @@ import {
   UserPlus, CheckCircle, XCircle, Plus, X,
 } from "lucide-react";
 
-const API = "http://localhost:5000/api";
+const API = "/api";
 
 const inputCls =
   "w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white " +

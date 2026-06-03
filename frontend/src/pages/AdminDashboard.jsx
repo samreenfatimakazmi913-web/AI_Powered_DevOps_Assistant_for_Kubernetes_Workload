@@ -20,7 +20,7 @@ import {
 
 import { motion, AnimatePresence } from "framer-motion";
 
-const API = "http://localhost:5000/api";
+const API = "/api";
 
 const inputCls =
   "w-full px-3 py-2 text-sm border border-[#E5E7EB] rounded-lg bg-white " +

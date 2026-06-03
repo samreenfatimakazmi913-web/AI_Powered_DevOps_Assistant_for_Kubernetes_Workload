@@ -13,7 +13,7 @@ import {
   Check,
 } from "lucide-react";
 
-const API = "http://localhost:5000/api";
+const API = "/api";
 
 export default function DeveloperDetailPage() {
   const { developerId } = useParams();

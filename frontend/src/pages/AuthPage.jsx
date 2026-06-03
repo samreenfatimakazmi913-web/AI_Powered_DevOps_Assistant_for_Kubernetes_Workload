@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import FloatingInput from "../components/ui/FloatingInput";
 import { motion } from "framer-motion";
 
-const API = "http://localhost:5000/api";
+const API = "/api";
 
 export default function AuthPage() {
   const navigate = useNavigate();

@@ -5,7 +5,7 @@ import { useLocation } from "react-router-dom";
 
 import DeploymentCharts from "../components/charts/DeploymentCharts";
 
-const API = "http://localhost:5000/api";
+const API = "/api";
 
 
 

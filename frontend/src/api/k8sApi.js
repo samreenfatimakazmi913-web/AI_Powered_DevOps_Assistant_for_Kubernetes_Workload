@@ -1,4 +1,4 @@
-const BASE_URL = "http://localhost:5000/api";
+const BASE_URL = "/api";
 
 // Returns all namespaces the current developer is allowed to see (empty = admin/all)
 function getUserNamespaces() {

@@ -125,7 +125,7 @@ export default function Topbar({ onMenuClick }) {
           >
             {user?.profileImage ? (
               <img
-                src={`http://localhost:5000${user.profileImage}`}
+                src={`/api${user.profileImage}`}
                 alt="avatar"
                 className="w-7 h-7 rounded-full object-cover"
               />
@@ -155,7 +155,7 @@ export default function Topbar({ onMenuClick }) {
               <div className="px-4 py-3.5 bg-sidebarActive border-b border-border flex gap-3 items-center">
                 {user?.profileImage ? (
                   <img
-                    src={`http://localhost:5000${user.profileImage}`}
+                    src={`/api${user.profileImage}`}
                     alt="profile"
                     className="w-10 h-10 rounded-full object-cover"
                   />
@@ -241,7 +241,7 @@ function ChangePasswordModal({ onClose }) {
 
     const user = JSON.parse(localStorage.getItem("user"));
 
-    const res = await fetch("http://localhost:5000/api/users/change-password", {
+    const res = await fetch("/api/users/change-password", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

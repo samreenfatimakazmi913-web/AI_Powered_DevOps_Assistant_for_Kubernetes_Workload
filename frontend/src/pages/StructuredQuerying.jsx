@@ -9,7 +9,7 @@ import {
   CartesianGrid, PieChart, Pie, Cell, BarChart, Bar,
 } from "recharts";
 
-const API = "http://localhost:5000/api";
+const API = "/api";
 
 /* ═══════════════════════════════════════
    COLOR PALETTE (New Theme)

@@ -1,6 +1,8 @@
 # dependencies
 node_modules/
 
+backend-secret.yaml
+
 # env files
 .env
 .env.*

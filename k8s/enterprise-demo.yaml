@@ -1,0 +1,511 @@
+# =====================================================
+# ENTERPRISE DEMO WORKLOADS
+# Rich Kubernetes environment for FYP dashboards
+# Includes:
+# - Multiple Deployments
+# - Multiple StatefulSets
+# - Multiple DaemonSets
+# - Jobs + CronJobs
+# - PVCs
+# - CrashLoopBackOff
+# - Services
+# - ConfigMaps
+# - Secrets
+# - HPA
+# =====================================================
+
+# =====================================================
+# CONFIG MAP
+# =====================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: enterprise-config
+data:
+  ENV: production
+  LOG_LEVEL: debug
+
+---
+# =====================================================
+# SECRET
+# =====================================================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: enterprise-secret
+type: Opaque
+stringData:
+  DB_PASSWORD: password123
+  REDIS_PASSWORD: redis123
+
+---
+# =====================================================
+# FRONTEND DEPLOYMENT
+# =====================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: frontend-app
+  template:
+    metadata:
+      labels:
+        app: frontend-app
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "80"
+    spec:
+      containers:
+        - name: frontend
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+
+---
+# =====================================================
+# FRONTEND SERVICE
+# =====================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+spec:
+  selector:
+    app: frontend-app
+  ports:
+    - port: 80
+      targetPort: 80
+
+---
+# =====================================================
+# BACKEND DEPLOYMENT
+# =====================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend-api
+  template:
+    metadata:
+      labels:
+        app: backend-api
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3000"
+    spec:
+      containers:
+        - name: backend
+          image: node:20-alpine
+          command:
+            - /bin/sh
+            - -c
+            - |
+              while true; do
+                echo "Backend Running";
+                sleep 15;
+              done
+          ports:
+            - containerPort: 3000
+          env:
+            - name: ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: enterprise-config
+                  key: ENV
+
+---
+# =====================================================
+# BACKEND SERVICE
+# =====================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+spec:
+  selector:
+    app: backend-api
+  ports:
+    - port: 3000
+      targetPort: 3000
+
+---
+# =====================================================
+# REDIS STATEFULSET
+# =====================================================
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis-stateful
+spec:
+  serviceName: redis-headless
+  replicas: 2
+  selector:
+    matchLabels:
+      app: redis-stateful
+  template:
+    metadata:
+      labels:
+        app: redis-stateful
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          ports:
+            - containerPort: 6379
+          volumeMounts:
+            - name: redis-storage
+              mountPath: /data
+  volumeClaimTemplates:
+    - metadata:
+        name: redis-storage
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+
+---
+# =====================================================
+# REDIS HEADLESS SERVICE
+# =====================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-headless
+spec:
+  clusterIP: None
+  selector:
+    app: redis-stateful
+  ports:
+    - port: 6379
+      targetPort: 6379
+
+---
+# =====================================================
+# POSTGRES STATEFULSET
+# =====================================================
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-db
+spec:
+  serviceName: postgres-headless
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-db
+  template:
+    metadata:
+      labels:
+        app: postgres-db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15-alpine
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_PASSWORD
+              value: postgres123
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-storage
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 2Gi
+
+---
+# =====================================================
+# POSTGRES HEADLESS SERVICE
+# =====================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-headless
+spec:
+  clusterIP: None
+  selector:
+    app: postgres-db
+  ports:
+    - port: 5432
+      targetPort: 5432
+
+---
+# =====================================================
+# MONGODB STATEFULSET
+# =====================================================
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongodb-stateful
+spec:
+  serviceName: mongodb-headless
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb-stateful
+  template:
+    metadata:
+      labels:
+        app: mongodb-stateful
+    spec:
+      containers:
+        - name: mongodb
+          image: mongo:7
+          ports:
+            - containerPort: 27017
+          volumeMounts:
+            - name: mongo-storage
+              mountPath: /data/db
+  volumeClaimTemplates:
+    - metadata:
+        name: mongo-storage
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 2Gi
+
+---
+# =====================================================
+# MONGODB HEADLESS SERVICE
+# =====================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb-headless
+spec:
+  clusterIP: None
+  selector:
+    app: mongodb-stateful
+  ports:
+    - port: 27017
+      targetPort: 27017
+
+---
+# =====================================================
+# FLUENTD DAEMONSET
+# =====================================================
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: fluentd-agent
+spec:
+  selector:
+    matchLabels:
+      app: fluentd-agent
+  template:
+    metadata:
+      labels:
+        app: fluentd-agent
+    spec:
+      containers:
+        - name: fluentd
+          image: fluent/fluentd:v1.16-1
+          resources:
+            limits:
+              memory: "200Mi"
+              cpu: "200m"
+
+---
+# =====================================================
+# NODE EXPORTER DAEMONSET
+# =====================================================
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: node-exporter
+spec:
+  selector:
+    matchLabels:
+      app: node-exporter
+  template:
+    metadata:
+      labels:
+        app: node-exporter
+    spec:
+      containers:
+        - name: exporter
+          image: prom/node-exporter
+          ports:
+            - containerPort: 9100
+
+---
+# =====================================================
+# BUSYBOX MONITOR DAEMONSET
+# =====================================================
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: monitor-agent
+spec:
+  selector:
+    matchLabels:
+      app: monitor-agent
+  template:
+    metadata:
+      labels:
+        app: monitor-agent
+    spec:
+      containers:
+        - name: busybox-monitor
+          image: busybox
+          command:
+            - /bin/sh
+            - -c
+            - |
+              while true; do
+                echo "Monitoring node...";
+                sleep 30;
+              done
+
+---
+# =====================================================
+# JOB
+# =====================================================
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: analytics-job
+spec:
+  template:
+    spec:
+      containers:
+        - name: analytics
+          image: busybox
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Running analytics job";
+              sleep 20;
+              echo "Analytics complete";
+      restartPolicy: Never
+  backoffLimit: 2
+
+---
+# =====================================================
+# CRONJOB
+# =====================================================
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: backup-cronjob
+spec:
+  schedule: "*/2 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: backup
+              image: busybox
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  echo "Performing scheduled backup at $(date)"
+          restartPolicy: OnFailure
+
+---
+# =====================================================
+# HPA
+# =====================================================
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: backend-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: backend-api
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+
+---
+# =====================================================
+# CRASH LOOP POD
+# =====================================================
+apiVersion: v1
+kind: Pod
+metadata:
+  name: crashloop-demo
+spec:
+  containers:
+    - name: broken-container
+      image: busybox
+      command:
+        - /bin/sh
+        - -c
+        - exit 1
+  restartPolicy: Always
+
+---
+# =====================================================
+# PENDING POD
+# =====================================================
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pending-demo
+spec:
+  nodeSelector:
+    impossible: "true"
+  containers:
+    - name: nginx
+      image: nginx
+
+---
+# =====================================================
+# OOM KILL POD
+# =====================================================
+apiVersion: v1
+kind: Pod
+metadata:
+  name: oom-demo
+spec:
+  containers:
+    - name: memory-hog
+      image: polinux/stress
+      resources:
+        limits:
+          memory: "50Mi"
+      command:
+        - stress
+        - --vm
+        - "1"
+        - --vm-bytes
+        - "200M"
+        - --timeout
+        - "60s"
