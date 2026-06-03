@@ -1,0 +1,332 @@
+# =====================================================
+# ADVANCED SAMPLE WORKLOAD SET
+# Includes:
+# - Frontend Deployment
+# - Backend API Deployment
+# - Redis Cache
+# - ConfigMap
+# - Secret
+# - Horizontal Pod Autoscaler
+# - Persistent Volume Claim
+# - Service Definitions
+# - CronJob
+# =====================================================
+
+# =====================================================
+# 1. CONFIG MAP
+# =====================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo-app-config
+data:
+  APP_MODE: "production"
+  LOG_LEVEL: "debug"
+
+---
+# =====================================================
+# 2. SECRET
+# =====================================================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: demo-app-secret
+type: Opaque
+stringData:
+  REDIS_PASSWORD: "redis123"
+
+---
+# =====================================================
+# 3. REDIS CACHE
+# =====================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-cache
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis-cache
+  template:
+    metadata:
+      labels:
+        app: redis-cache
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          ports:
+            - containerPort: 6379
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: demo-app-secret
+                  key: REDIS_PASSWORD
+          command:
+            - redis-server
+            - --requirepass
+            - $(REDIS_PASSWORD)
+
+---
+# =====================================================
+# 4. REDIS SERVICE
+# =====================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+spec:
+  selector:
+    app: redis-cache
+  ports:
+    - port: 6379
+      targetPort: 6379
+
+---
+# =====================================================
+# 5. BACKEND API DEPLOYMENT
+# =====================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: demo-backend
+  template:
+    metadata:
+      labels:
+        app: demo-backend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3000"
+    spec:
+      containers:
+        - name: backend
+          image: node:20-alpine
+          command:
+            - /bin/sh
+            - -c
+            - |
+              while true; do
+                echo "Backend API Running";
+                sleep 10;
+              done
+          ports:
+            - containerPort: 3000
+          env:
+            - name: APP_MODE
+              valueFrom:
+                configMapKeyRef:
+                  name: demo-app-config
+                  key: APP_MODE
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "300m"
+              memory: "256Mi"
+
+---
+# =====================================================
+# 6. BACKEND SERVICE
+# =====================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service-demo
+spec:
+  selector:
+    app: demo-backend
+  ports:
+    - port: 3000
+      targetPort: 3000
+
+---
+# =====================================================
+# 7. FRONTEND DEPLOYMENT
+# =====================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-frontend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: demo-frontend
+  template:
+    metadata:
+      labels:
+        app: demo-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "150m"
+              memory: "128Mi"
+
+---
+# =====================================================
+# 8. FRONTEND SERVICE
+# =====================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service-demo
+spec:
+  type: NodePort
+  selector:
+    app: demo-frontend
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30081
+
+---
+# =====================================================
+# 9. PERSISTENT VOLUME CLAIM
+# =====================================================
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: demo-storage-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+# =====================================================
+# 10. STATEFUL DATABASE
+# =====================================================
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-db
+spec:
+  serviceName: postgres-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-db
+  template:
+    metadata:
+      labels:
+        app: postgres-db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15-alpine
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_PASSWORD
+              value: "postgres123"
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-storage
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+
+---
+# =====================================================
+# 11. POSTGRES SERVICE
+# =====================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+spec:
+  selector:
+    app: postgres-db
+  ports:
+    - port: 5432
+      targetPort: 5432
+
+---
+# =====================================================
+# 12. HORIZONTAL POD AUTOSCALER
+# =====================================================
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: backend-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: demo-backend
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+
+---
+# =====================================================
+# 13. CRON JOB
+# =====================================================
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: health-check-cron
+spec:
+  schedule: "*/2 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: health-checker
+              image: busybox
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  echo "Running health check...";
+                  date;
+          restartPolicy: OnFailure
+
+---
+# =====================================================
+# 14. FAILING POD (FOR EVENTS + TROUBLESHOOTING)
+# =====================================================
+apiVersion: v1
+kind: Pod
+metadata:
+  name: crash-demo-pod
+spec:
+  containers:
+    - name: broken-container
+      image: busybox
+      command:
+        - /bin/sh
+        - -c
+        - exit 1
+  restartPolicy: Always
